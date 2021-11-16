@@ -10,4 +10,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "VersatileUBB"
 include ':app'
-include ':lib_ubb'
+include ':library_ubb'

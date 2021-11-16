@@ -60,7 +60,7 @@ dependencies {
     //okhttp
     implementation("com.squareup.okhttp3:okhttp:3.12.13")
 
-    implementation project(path: ':lib_ubb')
+    implementation project(path: ':library_ubb')
 
     testImplementation 'junit:junit:4.13.2'
 

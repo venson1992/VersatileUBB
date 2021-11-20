@@ -1,4 +1,4 @@
-package com.aiwu.market.ubb.span
+package com.venson.versatile.ubb.span
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,24 +11,23 @@ import android.text.style.CharacterStyle
 import android.text.style.LineBackgroundSpan
 import androidx.annotation.ColorInt
 import androidx.annotation.Px
-import com.venson.versatile.ubb.span.ISpan
-import com.venson.versatile.ubb.span.SpanContent
+import com.venson.versatile.ubb.style.AbstractStyle
 
 /**
  * 可换行的自定义span
  * 背景支持圆角设置
  * 前景支持颜色设置
  */
-abstract class BaseLineEnableSpan(
-    private val spanContent: SpanContent,
+abstract class AbstractLineEnableSpan(
+    private val abstractStyle: AbstractStyle,
     private val align: Paint.Align = Paint.Align.LEFT,
     @ColorInt val textColor: Int = Color.TRANSPARENT,
     @ColorInt val backgroundColor: Int = Color.TRANSPARENT,
     @Px val radius: Float = 0F
 ) : CharacterStyle(), LineBackgroundSpan, ISpan {
 
-    override fun getSpanContent(): SpanContent {
-        return spanContent
+    override fun getStyle(): AbstractStyle {
+        return abstractStyle
     }
 
     override fun drawBackground(
@@ -100,20 +99,6 @@ abstract class BaseLineEnableSpan(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             tp?.underlineColor = Color.TRANSPARENT
         }
-    }
-
-    /**
-     * 获取当前样式的ubb代码
-     */
-    override fun getUBB(): String {
-        return spanContent.toUBB(getTag())
-    }
-
-    /**
-     * 获取当前样式的文本内容
-     */
-    override fun getText(): String {
-        return spanContent.getText()
     }
 
     /**

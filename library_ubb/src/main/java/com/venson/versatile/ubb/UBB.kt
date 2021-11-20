@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.graphics.Color
 import android.util.Log
 import androidx.annotation.ColorInt
+import com.venson.versatile.ubb.style.AbstractStyle
 
 /**
  * 一些配置项
@@ -26,6 +27,10 @@ object UBB {
     private var mClickableColor: Int = Color.parseColor("#03a9f4")
 
     private var LOG = true
+
+    private val mStyleBuilderMap = mutableMapOf<String, AbstractStyle.Helper>()
+
+    private var mImageEngine: ImageEngine? = null
 
     /**
      * 设置可点击的文本大小
@@ -59,4 +64,27 @@ object UBB {
         }
     }
 
+    fun logV(tag: String, message: String?) {
+        message?.let {
+            if (logEnable()) {
+                Log.v(tag, it)
+            }
+        }
+    }
+
+    fun registerStyleBuilder(helper: AbstractStyle.Helper) {
+        mStyleBuilderMap[helper.getTagName()] = helper
+    }
+
+    fun getStyleBuilderMap(): Map<String, AbstractStyle.Helper> {
+        return mStyleBuilderMap
+    }
+
+    fun setImageEngine(imageEngine: ImageEngine) {
+        mImageEngine = imageEngine
+    }
+
+    fun getImageEngine(): ImageEngine? {
+        return mImageEngine
+    }
 }

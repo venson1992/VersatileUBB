@@ -17,6 +17,7 @@ import com.venson.versatile.ubb.holder.AudioViewHolder
 import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.holder.ImageViewHolder
 import com.venson.versatile.ubb.holder.VideoViewHolder
+import com.venson.versatile.ubb.style.ImageStyle
 
 class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -61,9 +62,9 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
         }
         if (holder is ImageViewHolder) {
             holder.itemView.visibility = View.GONE
-            val spanContent = ubbContentBean.spanContent ?: return
-            val url = spanContent.getAttr()["src"] ?: return
-            val width = spanContent.getAttr()["width"] ?: "auto"
+            val style = ubbContentBean.style ?: return
+            val url = style.getAttr()[ImageStyle.ATTR_SRC] ?: return
+            val width = style.getAttr()[ImageStyle.ATTR_WIDTH] ?: ImageStyle.VALUE_AUTO
             val widthPercent: Float = if (width.endsWith("%")) {
                 width.substring(0, width.length - 1).toFloatOrNull()?.div(100F) ?: 100F
             } else {
@@ -72,7 +73,7 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
             holder.itemView.visibility = View.VISIBLE
             val itemWidth = holder.itemView.measuredWidth
             //自动宽度
-            val imageWidth = if (width == "auto") {
+            val imageWidth = if (width == ImageStyle.VALUE_AUTO) {
                 itemWidth
             } else {
                 if (widthPercent >= 1F) {
@@ -94,7 +95,7 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
                     }
                     val resourceWidth = resource.width
                     val resourceHeight = resource.height
-                    val displayWidth: Int = if (width == "auto") {
+                    val displayWidth: Int = if (width == ImageStyle.VALUE_AUTO) {
                         if (resourceWidth <= itemWidth) {
                             resourceWidth
                         } else {

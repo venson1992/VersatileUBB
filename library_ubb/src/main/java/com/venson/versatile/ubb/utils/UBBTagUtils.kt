@@ -6,11 +6,10 @@ import android.text.style.AlignmentSpan
 import android.text.style.BulletSpan
 import android.text.style.QuoteSpan
 import android.text.style.StyleSpan
-import com.venson.versatile.ubb.convert.UBBConvert
 import com.venson.versatile.ubb.span.ISpan
 import org.jsoup.nodes.Node
 
-fun getSpanByTag(tagName: String, node: Node, ubbConvert: UBBConvert? = null): Any? {
+fun getSpanByTag(tagName: String, node: Node): Any? {
     if (isSupportTag(tagName)) {
         if (tagName.equals("p", true)) {
             val align = node.attr("align")
@@ -41,7 +40,7 @@ fun getSpanByTag(tagName: String, node: Node, ubbConvert: UBBConvert? = null): A
             return StyleSpan(Typeface.ITALIC)
         }
     }
-    return ubbConvert?.getSpan(tagName, node)
+    return null
 }
 
 /**

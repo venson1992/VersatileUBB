@@ -5,8 +5,8 @@ import android.text.Spannable
 import android.util.Log
 import android.view.MotionEvent
 import android.widget.TextView
-import com.venson.versatile.ubb.span.ITouchableSpan
 import com.venson.versatile.ubb.BuildConfig
+import com.venson.versatile.ubb.span.ITouchableSpan
 import java.lang.ref.WeakReference
 
 class TouchDecorHelper {

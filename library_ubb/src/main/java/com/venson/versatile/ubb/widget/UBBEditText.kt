@@ -7,10 +7,10 @@ import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.util.AttributeSet
 import android.util.Log
-import com.aiwu.market.ubb.span.BaseLineEnableSpan
+import com.venson.versatile.ubb.span.AbstractLineEnableSpan
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.ext.getUbb
-import com.venson.versatile.ubb.span.BaseSpan
+import com.venson.versatile.ubb.span.AbstractReplacementSpan
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.span.ImageSpan
 import java.util.*
@@ -30,7 +30,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
     private val mTextWatcher by lazy {
         object : TextWatcher {
 
-            var selectedSpans: Array<BaseSpan>? = null
+            var selectedReplacementSpans: Array<AbstractReplacementSpan>? = null
             var startPos = 0
             var endPos = 0
 
@@ -50,7 +50,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
                 needDeleteSpanEnd = null
                 if (count == 1 && !s.isNullOrEmpty() && after == 0) {
                     editableText.getSpans(
-                        start, start + count, BaseLineEnableSpan::class.java
+                        start, start + count, AbstractLineEnableSpan::class.java
                     )?.let { spans ->
                         if (spans.isNotEmpty()) {
                             spans[0]?.let { lineEnableSpan ->
@@ -68,17 +68,17 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
                 监听span增删
                  */
                 mSpanChangedListener?.let {
-                    selectedSpans = null
+                    selectedReplacementSpans = null
                     val editable = text
                     if (editable != null) {
-                        selectedSpans = editable.getSpans(
-                            start, start + count, BaseSpan::class.java
+                        selectedReplacementSpans = editable.getSpans(
+                            start, start + count, AbstractReplacementSpan::class.java
                         )
                     }
                     UBB.log(
                         logTag,
                         "beforeTextChanged::selectedAreTagSpans="
-                                + Arrays.toString(selectedSpans)
+                                + Arrays.toString(selectedReplacementSpans)
                     )
                 }
             }
@@ -110,13 +110,13 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
                 mSpanChangedListener?.let { changedListener ->
                     if (endPos <= startPos) {
                         UBB.log(logTag, "删除: start == $startPos endPos == $endPos")
-                        selectedSpans?.let { spans ->
+                        selectedReplacementSpans?.let { spans ->
                             changedListener.onChanged(spans, false)
                         }
                     } else {
                         UBB.log(logTag, "增加: start == $startPos endPos == $endPos")
-                        selectedSpans = s?.getSpans(startPos, endPos, BaseSpan::class.java)
-                        selectedSpans?.let { spans ->
+                        selectedReplacementSpans = s?.getSpans(startPos, endPos, AbstractReplacementSpan::class.java)
+                        selectedReplacementSpans?.let { spans ->
                             changedListener.onChanged(spans, true)
                         }
                     }
@@ -203,7 +203,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
             /*
             是否包含自定义span，有则原样返回，不改变样式
              */
-            val spans = getSpans(0, length, BaseSpan::class.java)
+            val spans = getSpans(0, length, AbstractReplacementSpan::class.java)
             if (!spans.isNullOrEmpty()) {
                 return@InputFilter null
             }
@@ -301,7 +301,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
         if (selStart == recordSelStart && selEnd == recordSelEnd) {
             return
         }
-        val lineSpans = editableText.getSpans(selStart, selEnd, BaseLineEnableSpan::class.java)
+        val lineSpans = editableText.getSpans(selStart, selEnd, AbstractLineEnableSpan::class.java)
         if (!lineSpans.isNullOrEmpty()) {
             var startIndex = -1
             var endIndex = -1
@@ -507,7 +507,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
      * 监听span的插入和移除
      */
     interface OnSpanChangedListener {
-        fun onChanged(spanArray: Array<BaseSpan>, isInsert: Boolean)
+        fun onChanged(replacementSpanArray: Array<AbstractReplacementSpan>, isInsert: Boolean)
     }
 
     /**

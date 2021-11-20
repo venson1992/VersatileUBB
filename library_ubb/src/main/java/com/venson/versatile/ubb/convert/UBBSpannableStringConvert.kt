@@ -2,8 +2,9 @@ package com.venson.versatile.ubb.convert
 
 import android.graphics.Paint
 import android.text.SpannableStringBuilder
+import com.venson.versatile.ubb.style.AbstractStyle
 
-open class SpannableStringUBBConvert : UBBConvert() {
+open class UBBSpannableStringConvert : AbstractConvert() {
 
     private val mSpannableString: SpannableStringBuilder by lazy {
         SpannableStringBuilder()
@@ -26,6 +27,18 @@ open class SpannableStringUBBConvert : UBBConvert() {
             mSpannableString.append(content)
         }
         span?.let {
+            mSpannableString.setSpan(
+                span,
+                start,
+                end,
+                SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+    }
+
+    override fun onStyleParsed(style: AbstractStyle, start: Int, end: Int, align: Paint.Align) {
+        mSpannableString.append(style.getSpanText())
+        style.getSpan()?.let { span ->
             mSpannableString.setSpan(
                 span,
                 start,

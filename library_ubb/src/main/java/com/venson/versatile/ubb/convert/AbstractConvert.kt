@@ -3,16 +3,22 @@ package com.venson.versatile.ubb.convert
 import android.graphics.Paint
 import android.text.Layout
 import android.text.style.AlignmentSpan
+import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.ext.getText
-import com.venson.versatile.ubb.span.BaseSpan
-import com.venson.versatile.ubb.span.ISpan
+import com.venson.versatile.ubb.style.AbstractStyle
+import com.venson.versatile.ubb.style.AtSomeoneStyle
+import com.venson.versatile.ubb.style.ImageStyle
+import com.venson.versatile.ubb.utils.convertHTML
 import com.venson.versatile.ubb.utils.getSpanByTag
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
-import java.util.regex.Pattern
 
-abstract class UBBConvert {
+abstract class AbstractConvert {
+
+    companion object {
+        private const val TAG = "UBBConvert"
+    }
 
     //预览文本内容，不包含图片和其他排除掉的标签内容
     private var mContent: String = ""
@@ -28,23 +34,30 @@ abstract class UBBConvert {
         if (ubb.isNullOrEmpty()) {
             return
         }
+        /*
+        自带的标签解析
+         */
+        UBB.registerStyleBuilder(AtSomeoneStyle.Helper)
+        UBB.registerStyleBuilder(ImageStyle.Helper)
+        /*
+        转换html
+         */
         val html = convertHTMLTag(ubb)
         val bodyElement = Jsoup.parseBodyFragment(html).body()
+        /*
+        解析
+         */
         onBodyElementCreated(bodyElement)
-        println("html=${bodyElement.html()}")
+        UBB.logV(TAG, "html=${bodyElement.html()}")
         parseChildElement(bodyElement)
     }
 
     abstract fun resetContent()
 
-    open fun convertHTML(ubb: String): String {
-        return ubb
-    }
-
     /**
      * 解析的document已经生成
      */
-    fun onBodyElementCreated(bodyElement: Element?) {
+    private fun onBodyElementCreated(bodyElement: Element?) {
         mContent = ""
         mImageList.clear()
         bodyElement ?: return
@@ -52,9 +65,10 @@ abstract class UBBConvert {
         文本
          */
         mContent = bodyElement.text()
+        val imageTag = ImageStyle.Helper.getTagName()
         val ignoredTagList = getIgnoredConvert2Text().toMutableList()
-        if (!ignoredTagList.contains("img")) {
-            ignoredTagList.add("img")
+        if (!ignoredTagList.contains(imageTag)) {
+            ignoredTagList.add(imageTag)
         }
         ignoredTagList.forEach { ignoredTag ->
             bodyElement.getElementsByTag(ignoredTag).forEach { ignoredElement ->
@@ -62,8 +76,8 @@ abstract class UBBConvert {
                 /*
                 记录图片
                  */
-                if (ignoredTag == "img") {
-                    mImageList.add(ignoredElement.attr("src"))
+                if (ignoredTag == imageTag) {
+                    mImageList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
                 }
             }
         }
@@ -72,21 +86,6 @@ abstract class UBBConvert {
     fun getContent(): String = mContent
 
     fun getImageList(): List<String> = mImageList
-
-    abstract fun onSpanParsed(
-        span: Any?,
-        start: Int,
-        end: Int,
-        content: String? = null,
-        align: Paint.Align
-    )
-
-    /**
-     * 返回一些自定义标签span
-     */
-    open fun getSpan(tagName: String, node: Node): BaseSpan? {
-        return null
-    }
 
     /**
      * 传入忽略文本的标签
@@ -104,7 +103,8 @@ abstract class UBBConvert {
         node.childNodes().forEachIndexed { index, childNode ->
             val childSize = childNode.childNodeSize()
             val tagName = childNode.nodeName()
-            val span = getSpanByTag(tagName, childNode) ?: getSpan(tagName, childNode)
+            val normalSpan = getSpanByTag(tagName, childNode)
+            val style = getStyle(tagName, childNode, align)
             /*
             如果p兄弟tag不是br，则追加br
              */
@@ -136,19 +136,21 @@ abstract class UBBConvert {
             }
             val content: String
             val contentLength: Int
-            if (tagName.equals("br", true)) {
+            if (tagName.equals("br", true)
+                || (childSize <= 0 && tagName.equals("p", true))
+            ) {
                 content = "\n"
                 contentLength = content.length
-            } else if (span is ISpan || childSize <= 0) {
-                val text = childNode.getText()
+            } else if (normalSpan == null || style != null || childSize <= 0) {
+                val text = style?.getSpanText() ?: childNode.getText()
                 if (text.isEmpty()) {
                     return@forEachIndexed
                 }
                 content = text
                 contentLength = text.length
             } else {
-                val nowAlign = if (span is AlignmentSpan.Standard) {
-                    when (span.alignment) {
+                val nowAlign = if (normalSpan is AlignmentSpan.Standard) {
+                    when (normalSpan.alignment) {
                         Layout.Alignment.ALIGN_CENTER -> {
                             Paint.Align.CENTER
                         }
@@ -167,10 +169,45 @@ abstract class UBBConvert {
             }
             totalLength += contentLength
             val end = start + contentLength
-            onSpanParsed(span, start, end, content, align)
+            if (style != null) {
+                onStyleParsed(style, start, end, align)
+            } else {
+                onSpanParsed(normalSpan, start, end, content, align)
+            }
         }
         return totalLength
     }
+
+    /**
+     * 非自定义span
+     */
+    abstract fun onSpanParsed(
+        span: Any?,
+        start: Int,
+        end: Int,
+        content: String? = null,
+        align: Paint.Align
+    )
+
+    /**
+     * 返回一些自定义标签span
+     */
+    private fun getStyle(tagName: String, node: Node, align: Paint.Align): AbstractStyle? {
+        UBB.getStyleBuilderMap()[tagName]?.let { builder ->
+            return builder.fromUBB(node, align)
+        }
+        return null
+    }
+
+    /**
+     * 自定义span
+     */
+    abstract fun onStyleParsed(
+        style: AbstractStyle,
+        start: Int,
+        end: Int,
+        align: Paint.Align
+    )
 
     /**
      * 替换成html
@@ -209,7 +246,11 @@ abstract class UBBConvert {
             dest, "td(.*?)", "td", "<td>", "</td>"
         )
         dest = convertHTML(
-            dest, "table(.*?)", "table", "<table>", "</table>"
+            dest,
+            "table(.*?)",
+            "table",
+            "<table>",
+            "</table>"
         )
         dest = convertHTML(
             dest,
@@ -234,22 +275,10 @@ abstract class UBBConvert {
         )
         dest = convertHTML(
             dest,
-            "img",
-            "img",
-            "<img width=90%; height=auto; alt=\"\" src=\"", "\"></img>"
-        )
-        dest = convertHTML(
-            dest,
-            "img=,(.+?)",
-            "img",
-            "<img width=90%; height=auto; alt=\"\" src=\"",
-            "\"></img>"
-        )
-        dest = convertHTML(
-            dest,
             "size=(.+?)",
             "size",
-            "<span style=\"font-size:$2; color:black\">", "</span>"
+            "<span style=\"font-size:$2; color:black\">",
+            "</span>"
         )
         dest = convertHTML(
             dest,
@@ -282,54 +311,10 @@ abstract class UBBConvert {
         return dest
     }
 
-    /**
-     * 转换文本中对应标签
-     *
-     * @param source     原文本
-     * @param oldTag   被替换标签
-     * @param tagStart 新标签开始
-     * @param tagEnd   新标签结束
-     * @return 替换后文本
-     */
-    fun convertHTML(source: String?, oldTag: String, tagStart: String, tagEnd: String): String {
-        return convertHTML(source, oldTag, oldTag, tagStart, tagEnd)
-    }
-
-    /**
-     * 转换文本中对应标签
-     *
-     * @param source 替换前文本
-     * @param oldTagStart 被替换标签开始
-     * @param oldTagEnd 被替换标签结束
-     * @param newTagStart 新标签开始
-     * @param newTagEnd 新标签结束
-     * @return 替换后文本
-     */
-    fun convertHTML(
-        source: String?,
-        oldTagStart: String,
-        oldTagEnd: String,
-        newTagStart: String,
-        newTagEnd: String
-    ): String {
-        var dest = source ?: return ""
-        try {
-            val matcher = Pattern.compile(
-                "(\\[$oldTagStart\\])",
-                Pattern.DOTALL or Pattern.CASE_INSENSITIVE or Pattern.MULTILINE
-            )
-            dest = matcher.matcher(dest).replaceAll(newTagStart)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        try {
-            val matcher = Pattern.compile(
-                "(\\[/$oldTagEnd\\])",
-                Pattern.DOTALL or Pattern.CASE_INSENSITIVE or Pattern.MULTILINE
-            )
-            dest = matcher.matcher(dest).replaceAll(newTagEnd)
-        } catch (e: Exception) {
-            e.printStackTrace()
+    private fun convertHTML(ubb: String): String {
+        var dest = ubb
+        UBB.getStyleBuilderMap().forEach { entry ->
+            dest = entry.value.convertUBB(dest)
         }
         return dest
     }

@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.convert.UBBContentViewUBBConvert
+import com.venson.versatile.ubb.convert.UBBContentViewConvert
 import kotlinx.coroutines.*
 
 /**
@@ -31,8 +31,8 @@ class UBBContentView : RecyclerView {
     fun setUBB(ubb: String?) {
         mUBBContentList.clear()
         adapter = null
-        mJob = GlobalScope.launch(Dispatchers.IO) {
-            val ubbConvert = UBBContentViewUBBConvert()
+        mJob = GlobalScope.async(Dispatchers.IO) {
+            val ubbConvert = UBBContentViewConvert()
             ubbConvert.parseUBB(ubb)
             val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
             withContext(Dispatchers.Main) {
@@ -46,10 +46,10 @@ class UBBContentView : RecyclerView {
 //        mJob?.cancel()
 //        mJob?.start()
 //    }
-//
-//    override fun onDetachedFromWindow() {
-//        super.onDetachedFromWindow()
-//        mJob?.cancel()
-//    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        mJob?.cancel()
+    }
 
 }

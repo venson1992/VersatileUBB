@@ -4,6 +4,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.view.ViewCompat
+import com.venson.versatile.ubb.style.AbstractStyle
 
 /**
  * 可 Touch 的 Span，在 [.setPressed] 后根据是否 pressed 来触发不同的UI状态
@@ -36,23 +37,7 @@ abstract class TouchableSpan(
         return mIsPressed
     }
 
-    companion object {
-        private const val TAG = "QMUITouchableSpan"
-    }
-
-    override fun getTag(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getUBB(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getText(): String {
-        TODO("Not yet implemented")
-    }
-
-    override fun getSpanContent(): SpanContent {
+    override fun getStyle(): AbstractStyle {
         TODO("Not yet implemented")
     }
 }

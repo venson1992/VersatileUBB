@@ -8,13 +8,14 @@ import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
 import androidx.annotation.Px
+import com.venson.versatile.ubb.style.AbstractStyle
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
  * 文本型span
  */
-abstract class TextSpan(spanContent: SpanContent) : BaseSpan(spanContent) {
+abstract class TextSpan(abstractStyle: AbstractStyle) : AbstractReplacementSpan(abstractStyle) {
 
     //背景画笔
     private var mPaint: Paint = Paint()

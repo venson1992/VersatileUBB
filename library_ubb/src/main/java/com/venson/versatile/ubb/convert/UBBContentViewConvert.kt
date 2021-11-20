@@ -4,10 +4,12 @@ import android.graphics.Paint
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.span.ImageSpan
+import com.venson.versatile.ubb.style.AbstractStyle
+import com.venson.versatile.ubb.style.ImageStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-open class UBBContentViewUBBConvert : SpannableStringUBBConvert() {
+open class UBBContentViewConvert : UBBSpannableStringConvert() {
 
     private val mMediaSpanList = mutableListOf<Any>()
     private val mMediaSpanRangeList = mutableListOf<IntRange>()
@@ -34,6 +36,14 @@ open class UBBContentViewUBBConvert : SpannableStringUBBConvert() {
         }
     }
 
+    override fun onStyleParsed(style: AbstractStyle, start: Int, end: Int, align: Paint.Align) {
+        super.onStyleParsed(style, start, end, align)
+        if (style is ImageStyle) {
+            mMediaSpanList.add(style)
+            mMediaSpanRangeList.add(IntRange(start, end))
+        }
+    }
+
     suspend fun getUBBContentBeanList(): List<UBBContentBean> {
         return withContext(Dispatchers.IO) {
             val spannableString = getSpannableString()
@@ -56,7 +66,7 @@ open class UBBContentViewUBBConvert : SpannableStringUBBConvert() {
                 } catch (e: Exception) {
                     return@forEachIndexed
                 }
-                val lastEnd = lastIntRange?.last ?: intRange.first
+                val lastEnd = lastIntRange?.last ?: 0
                 if (lastEnd < intRange.first) {
                     ubbContentBeanList.add(
                         UBBContentBean().also {
@@ -66,13 +76,15 @@ open class UBBContentViewUBBConvert : SpannableStringUBBConvert() {
                     )
                 }
                 if (any is ImageSpan) {
-                    any.getSpanContent()
+                    any.getStyle()
+                } else if (any is ImageStyle) {
+                    any
                 } else {
                     null
-                }?.let { spanContent ->
+                }?.let { style ->
                     ubbContentBeanList.add(
                         UBBContentBean().also {
-                            it.spanContent = spanContent
+                            it.style = style
                             it.type = UBBContentAdapter.TYPE_IMAGE
                         }
                     )

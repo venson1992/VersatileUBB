@@ -21,7 +21,7 @@ class ImageViewHolder(itemView: ConstraintLayout) : RecyclerView.ViewHolder(item
 
     @DrawableRes
     fun getPlaceholderDrawableRes(): Int {
-        return 0
+        return android.R.color.holo_red_dark
     }
 
     fun getPlaceholderRatio(): String {

@@ -1,9 +1,9 @@
 package com.venson.versatile.ubb.bean
 
-import com.venson.versatile.ubb.span.SpanContent
+import com.venson.versatile.ubb.style.AbstractStyle
 
 class UBBContentBean {
     var type: Int = 0
     var text: CharSequence? = null
-    var spanContent: SpanContent? = null
+    var style: AbstractStyle? = null
 }

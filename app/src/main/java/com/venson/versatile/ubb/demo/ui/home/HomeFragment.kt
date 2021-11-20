@@ -83,6 +83,9 @@ class HomeFragment : Fragment() {
 
         override fun getItemCount(): Int {
             val count = mList?.size ?: 0
+//            if (count > 0) {
+//                return 1
+//            }
             return count
         }
 

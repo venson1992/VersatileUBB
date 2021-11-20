@@ -15,11 +15,11 @@ fun Bitmap.scale(maxWidth: Int = 0, maxHeight: Int = 0): Bitmap {
     var targetWidth = sourceWidth
     var targetHeight = sourceHeight
     if (maxWidth in 1 until targetWidth) {
-        targetHeight = (maxWidth * targetHeight).div(targetWidth)
+        targetHeight = maxWidth.times(targetHeight).div(targetWidth)
         targetWidth = maxWidth
     }
     if (maxHeight in 1 until targetHeight) {
-        targetWidth = (targetWidth * maxHeight).div(targetHeight)
+        targetWidth = targetWidth.times(maxHeight).div(targetHeight)
         targetHeight = maxHeight
     }
     val matrix = Matrix()
@@ -27,5 +27,13 @@ fun Bitmap.scale(maxWidth: Int = 0, maxHeight: Int = 0): Bitmap {
         targetWidth.toFloat().div(sourceWidth),
         targetHeight.toFloat().div(sourceHeight)
     )
-    return Bitmap.createBitmap(this, 0, 0, sourceWidth, sourceHeight, matrix, true)
+    return Bitmap.createBitmap(
+        this,
+        0,
+        0,
+        sourceWidth,
+        sourceHeight,
+        matrix,
+        true
+    )
 }

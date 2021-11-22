@@ -51,6 +51,9 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                 return@withContext emptyList()
             }
             val ubbContentBeanList = mutableListOf<UBBContentBean>()
+            /*
+            纯文本
+             */
             if (mMediaSpanList.isNullOrEmpty()) {
                 ubbContentBeanList.add(
                     UBBContentBean().also {
@@ -59,6 +62,9 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                     }
                 )
             }
+            /*
+            媒体分割
+             */
             var lastIntRange: IntRange? = null
             mMediaSpanList.forEachIndexed { index, any ->
                 val intRange = try {
@@ -70,7 +76,7 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                 if (lastEnd < intRange.first) {
                     ubbContentBeanList.add(
                         UBBContentBean().also {
-                            it.text = spannableString.substring(lastEnd, intRange.first)
+                            it.text = spannableString.subSequence(lastEnd, intRange.first)
                             it.type = UBBContentAdapter.TYPE_TEXT
                         }
                     )
@@ -91,11 +97,14 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                 }
                 lastIntRange = intRange
             }
+            /*
+            媒体分割后最后一段文本
+             */
             val lastEnd = lastIntRange?.last ?: spannableString.length
             if (lastEnd < spannableString.length) {
                 ubbContentBeanList.add(
                     UBBContentBean().also {
-                        it.text = spannableString.substring(lastEnd)
+                        it.text = spannableString.subSequence(lastEnd, spannableString.length)
                         it.type = UBBContentAdapter.TYPE_TEXT
                     }
                 )

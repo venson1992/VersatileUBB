@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -18,9 +17,9 @@ import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.holder.ImageViewHolder
 import com.venson.versatile.ubb.holder.VideoViewHolder
 import com.venson.versatile.ubb.style.ImageStyle
+import com.venson.versatile.ubb.widget.UBBContentView
 
-class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class UBBContentAdapter {
 
     companion object {
         const val TYPE_TEXT = 0x00
@@ -29,7 +28,7 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
         const val TYPE_VIDEO = 0x14
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UBBContentView.ViewHolder {
         val customViewHolder = onCreateCustomViewHolder(parent, viewType)
         if (customViewHolder != null) {
             return customViewHolder
@@ -50,12 +49,15 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
         }
     }
 
-    fun onCreateCustomViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder? {
+    fun onCreateCustomViewHolder(parent: ViewGroup, viewType: Int): UBBContentView.ViewHolder? {
         return null
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val ubbContentBean = getItem(position)
+    fun onBindViewHolder(
+        holder: UBBContentView.ViewHolder,
+        position: Int,
+        ubbContentBean: UBBContentBean
+    ) {
         if (holder is DefaultViewHolder) {
             holder.textView.setSpannableText(ubbContentBean.text)
             return
@@ -117,13 +119,12 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {
-                    loadPlaceholder(holder, imageWidth)
+//                    loadPlaceholder(holder, imageWidth)
                 }
 
             }
             Glide.with(holder.imageView).asBitmap().load(url).into(imageTarget)
         }
-        onBindViewHolder(holder, position, ubbContentBean)
     }
 
     private fun loadPlaceholder(holder: ImageViewHolder, imageWidth: Int) {
@@ -138,27 +139,6 @@ class UBBContentAdapter(private val mUBBContentList: List<UBBContentBean>) :
         Glide.with(holder.imageView)
             .load(holder.getPlaceholderDrawableRes())
             .into(holder.imageView)
-    }
-
-    fun onBindViewHolder(
-        holder: RecyclerView.ViewHolder,
-        position: Int,
-        ubbContentBean: UBBContentBean
-    ) {
-
-    }
-
-    fun getItem(position: Int): UBBContentBean {
-        return mUBBContentList[position]
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        val ubbContentBean = getItem(position)
-        return ubbContentBean.type
-    }
-
-    override fun getItemCount(): Int {
-        return mUBBContentList.size
     }
 
 }

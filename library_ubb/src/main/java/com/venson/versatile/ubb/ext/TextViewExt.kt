@@ -16,3 +16,17 @@ fun TextView?.fromUBB(ubb: String?, ubbConvert: UBBSpannableStringConvert? = nul
     spannableStringUBBConvert.parseUBB(ubb)
     text = spannableStringUBBConvert.getSpannableString()
 }
+
+/**
+ * 为textview显示ubb样式
+ */
+fun TextView?.fromUBBWithOnlyText(ubb: String?, ubbConvert: UBBSpannableStringConvert? = null) {
+    this ?: return
+    if (ubb.isNullOrEmpty()) {
+        text = ""
+        return
+    }
+    val spannableStringUBBConvert = ubbConvert ?: UBBSpannableStringConvert()
+    spannableStringUBBConvert.parseUBB(ubb)
+    text = spannableStringUBBConvert.getContent()
+}

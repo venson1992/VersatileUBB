@@ -5,13 +5,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
+import com.venson.versatile.ubb.ImageEngine
+import com.venson.versatile.ubb.UBB
+import com.venson.versatile.ubb.convert.UBBSpannableStringConvert
+import com.venson.versatile.ubb.demo.DataBean
 import com.venson.versatile.ubb.demo.databinding.FragmentHomeBinding
 import com.venson.versatile.ubb.demo.databinding.ItemLayoutContentBinding
+import com.venson.versatile.ubb.demo.ui.DetailActivity
 
 class HomeFragment : Fragment() {
 
@@ -33,6 +39,17 @@ class HomeFragment : Fragment() {
         binding.recyclerView.layoutManager = LinearLayoutManager(
             root.context, RecyclerView.VERTICAL, false
         )
+        UBB.setImageEngine(object : ImageEngine() {
+
+            override fun getDomain(): String {
+                return "file.25game.com"
+            }
+
+            override fun getSchema(): String {
+                return "http"
+            }
+
+        })
         val adapter = ContentAdapter()
         binding.recyclerView.adapter = adapter
         homeViewModel.mDataList.observe(requireActivity()) {
@@ -55,10 +72,10 @@ class HomeFragment : Fragment() {
 
     inner class ContentAdapter : RecyclerView.Adapter<ContentViewHolder>() {
 
-        private var mList: List<String>? = null
+        private var mList: List<DataBean>? = null
 
         @SuppressLint("NotifyDataSetChanged")
-        fun setData(list: List<String>?) {
+        fun setData(list: List<DataBean>?) {
             mList = list
             notifyDataSetChanged()
         }
@@ -71,14 +88,32 @@ class HomeFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: ContentViewHolder, position: Int) {
-            val ubb = try {
+            val binding: ItemLayoutContentBinding = holder.binding as? ItemLayoutContentBinding
+                ?: return
+            val dataBean = try {
                 mList?.get(position)
             } catch (e: Exception) {
                 null
-            } ?: ""
-            val binding: ItemLayoutContentBinding =
-                holder.binding as? ItemLayoutContentBinding ?: return
-            binding.contentView.setUBB(ubb)
+            }
+            binding.titleView.text = dataBean?.title ?: ""
+            val ubb = dataBean?.content ?: ""
+            val spannableStringUBBConvert = UBBSpannableStringConvert()
+            spannableStringUBBConvert.parseUBB(ubb)
+            val content = spannableStringUBBConvert.getContent()
+            if (content.isEmpty()) {
+                binding.contentView.visibility = View.GONE
+            } else {
+                binding.contentView.visibility = View.VISIBLE
+                binding.contentView.text = content
+                UBB.log("onBindViewHolder", "content->$content")
+            }
+            binding.root.setOnClickListener {
+                if (dataBean == null) {
+                    Toast.makeText(it.context, "数据为空", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+                DetailActivity.startActivity(requireContext(), dataBean)
+            }
         }
 
         override fun getItemCount(): Int {

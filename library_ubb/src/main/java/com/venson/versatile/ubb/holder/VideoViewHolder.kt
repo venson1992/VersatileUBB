@@ -4,12 +4,13 @@ import android.content.Context
 import android.view.Gravity
 import android.webkit.WebView
 import android.widget.FrameLayout
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.LinearLayout
+import com.venson.versatile.ubb.widget.UBBContentView
 
 /**
  * 视频
  */
-class VideoViewHolder(itemView: FrameLayout) : RecyclerView.ViewHolder(itemView) {
+class VideoViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemView) {
 
     val webView: WebView = WebView(itemView.context)
 
@@ -30,9 +31,9 @@ class VideoViewHolder(itemView: FrameLayout) : RecyclerView.ViewHolder(itemView)
 
         fun build(context: Context): VideoViewHolder {
             val itemView = FrameLayout(context)
-            itemView.layoutParams = RecyclerView.LayoutParams(
-                RecyclerView.LayoutParams.MATCH_PARENT,
-                RecyclerView.LayoutParams.WRAP_CONTENT
+            itemView.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             )
             return VideoViewHolder(itemView)
         }

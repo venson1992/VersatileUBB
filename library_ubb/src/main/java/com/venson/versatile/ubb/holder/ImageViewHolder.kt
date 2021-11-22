@@ -1,31 +1,33 @@
 package com.venson.versatile.ubb.holder
 
 import android.content.Context
+import android.widget.LinearLayout
 import androidx.annotation.DrawableRes
 import androidx.annotation.Px
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.imageview.ShapeableImageView
+import com.venson.versatile.ubb.R
+import com.venson.versatile.ubb.widget.UBBContentView
 
 /**
  * 图片
  */
-class ImageViewHolder(itemView: ConstraintLayout) : RecyclerView.ViewHolder(itemView) {
+class ImageViewHolder(itemView: ConstraintLayout) : UBBContentView.ViewHolder(itemView) {
 
     val imageView: ShapeableImageView = ShapeableImageView(itemView.context)
 
     @Px
     fun getCornerSize(): Float {
-        return 0F
+        return 50F
     }
 
     @DrawableRes
     fun getPlaceholderDrawableRes(): Int {
-        return android.R.color.holo_red_dark
+        return R.drawable.default_drawable
     }
 
     fun getPlaceholderRatio(): String {
-        return "2:1"
+        return "4:3"
     }
 
     init {
@@ -50,9 +52,9 @@ class ImageViewHolder(itemView: ConstraintLayout) : RecyclerView.ViewHolder(item
 
         fun build(context: Context): ImageViewHolder {
             val itemView = ConstraintLayout(context)
-            itemView.layoutParams = RecyclerView.LayoutParams(
-                RecyclerView.LayoutParams.MATCH_PARENT,
-                RecyclerView.LayoutParams.WRAP_CONTENT
+            itemView.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             )
             return ImageViewHolder(itemView)
         }

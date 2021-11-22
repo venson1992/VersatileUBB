@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.venson.versatile.ubb.demo.DataBean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -13,7 +14,7 @@ import java.io.InputStreamReader
 
 class HomeViewModel : ViewModel() {
 
-    val mDataList: MutableLiveData<List<String>?> = MutableLiveData()
+    val mDataList: MutableLiveData<List<DataBean>?> = MutableLiveData()
 
     fun readTestData(context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -29,14 +30,18 @@ class HomeViewModel : ViewModel() {
             } catch (e: IOException) {
                 e.printStackTrace()
             }
-            val contentList = mutableListOf<String>()
+            val contentList = mutableListOf<DataBean>()
             try {
                 val jsonArray = JSONArray(stringBuilder.toString())
                 for (index in 0 until jsonArray.length()) {
                     try {
                         val jsonObject = jsonArray.optJSONObject(index)
+                        val title = jsonObject.optString("Title")
                         val content = jsonObject.optString("Content")
-                        contentList.add(content)
+                        contentList.add(DataBean().also { dataBean ->
+                            dataBean.title = title
+                            dataBean.content = content
+                        })
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

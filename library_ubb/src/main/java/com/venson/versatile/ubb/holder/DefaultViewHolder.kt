@@ -2,13 +2,14 @@ package com.venson.versatile.ubb.holder
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.recyclerview.widget.RecyclerView
+import android.widget.LinearLayout
+import com.venson.versatile.ubb.widget.UBBContentView
 import com.venson.versatile.ubb.widget.UBBTextView
 
 /**
  * 文本
  */
-class DefaultViewHolder(itemView: FrameLayout) : RecyclerView.ViewHolder(itemView) {
+class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemView) {
 
     val textView: UBBTextView = UBBTextView(itemView.context)
 
@@ -27,9 +28,9 @@ class DefaultViewHolder(itemView: FrameLayout) : RecyclerView.ViewHolder(itemVie
 
         fun build(context: Context): DefaultViewHolder {
             val itemView = FrameLayout(context)
-            itemView.layoutParams = RecyclerView.LayoutParams(
-                RecyclerView.LayoutParams.MATCH_PARENT,
-                RecyclerView.LayoutParams.WRAP_CONTENT
+            itemView.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
             )
             return DefaultViewHolder(itemView)
         }

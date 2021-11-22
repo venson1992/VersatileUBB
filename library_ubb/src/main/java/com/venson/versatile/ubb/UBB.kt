@@ -1,9 +1,11 @@
 package com.venson.versatile.ubb
 
 import android.content.ContentResolver
+import android.content.Context
 import android.graphics.Color
 import android.util.Log
 import androidx.annotation.ColorInt
+import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.style.AbstractStyle
 
 /**
@@ -30,7 +32,11 @@ object UBB {
 
     private val mStyleBuilderMap = mutableMapOf<String, AbstractStyle.Helper>()
 
-    private var mImageEngine: ImageEngine? = null
+    private var applicationContext: Context? = null
+
+    private var imageEngine: ImageEngine? = null
+
+    private var contentAdapter: UBBContentAdapter = UBBContentAdapter()
 
     /**
      * 设置可点击的文本大小
@@ -80,11 +86,23 @@ object UBB {
         return mStyleBuilderMap
     }
 
-    fun setImageEngine(imageEngine: ImageEngine) {
-        mImageEngine = imageEngine
+    fun init(context: Context) {
+        applicationContext = context.applicationContext
     }
 
-    fun getImageEngine(): ImageEngine? {
-        return mImageEngine
+    fun getApplicationContext(): Context? = applicationContext
+
+    fun setImageEngine(imageEngine: ImageEngine) {
+        this.imageEngine = imageEngine
+    }
+
+    fun getImageEngine(): ImageEngine? = imageEngine
+
+    fun setContentAdapter(contentAdapter: UBBContentAdapter) {
+        this.contentAdapter = contentAdapter
+    }
+
+    fun getContentAdapter(): UBBContentAdapter {
+        return contentAdapter
     }
 }

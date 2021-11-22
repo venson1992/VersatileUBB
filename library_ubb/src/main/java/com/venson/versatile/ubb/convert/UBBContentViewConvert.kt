@@ -91,6 +91,15 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                 }
                 lastIntRange = intRange
             }
+            val lastEnd = lastIntRange?.last ?: spannableString.length
+            if (lastEnd < spannableString.length) {
+                ubbContentBeanList.add(
+                    UBBContentBean().also {
+                        it.text = spannableString.substring(lastEnd)
+                        it.type = UBBContentAdapter.TYPE_TEXT
+                    }
+                )
+            }
             return@withContext ubbContentBeanList
         }
     }

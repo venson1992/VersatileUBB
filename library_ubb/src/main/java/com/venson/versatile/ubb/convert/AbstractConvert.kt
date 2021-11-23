@@ -1,8 +1,15 @@
 package com.venson.versatile.ubb.convert
 
 import android.graphics.Paint
+import android.os.Build
+import android.text.Html
 import android.text.Layout
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.AbsoluteSizeSpan
 import android.text.style.AlignmentSpan
+import android.text.style.MetricAffectingSpan
+import android.text.style.RelativeSizeSpan
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.ext.getText
 import com.venson.versatile.ubb.style.AbstractStyle
@@ -105,6 +112,7 @@ abstract class AbstractConvert {
             val tagName = childNode.nodeName()
             val normalSpan = getSpanByTag(tagName, childNode)
             val style = getStyle(tagName, childNode, align)
+            var htmlSpanned: Spanned? = null
             /*
             如果p兄弟tag不是br，则追加br
              */
@@ -142,12 +150,29 @@ abstract class AbstractConvert {
                 content = "\n"
                 contentLength = content.length
             } else if (normalSpan == null || style != null || childSize <= 0) {
-                val text = style?.getSpanText() ?: childNode.getText()
-                if (text.isEmpty()) {
-                    return@forEachIndexed
+                if (normalSpan == null
+                    && style == null
+                    && (tagName.equals("span", true)
+                            || tagName.equals("font", true))
+                ) {
+                    htmlSpanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        Html.fromHtml(childNode.toString(), Html.FROM_HTML_MODE_LEGACY)
+                    } else {
+                        Html.fromHtml(childNode.toString())
+                    }
+                    getSizeSpan(htmlSpanned, childNode)?.let {
+                        htmlSpanned = it
+                    }
+                    content = htmlSpanned.toString()
+                    contentLength = content.length
+                } else {
+                    val text = style?.getSpanText() ?: childNode.getText()
+                    if (text.isEmpty()) {
+                        return@forEachIndexed
+                    }
+                    content = text
+                    contentLength = text.length
                 }
-                content = text
-                contentLength = text.length
             } else {
                 val nowAlign = if (normalSpan is AlignmentSpan.Standard) {
                     when (normalSpan.alignment) {
@@ -169,14 +194,75 @@ abstract class AbstractConvert {
             }
             totalLength += contentLength
             val end = start + contentLength
-            if (style != null) {
-                onStyleParsed(style, start, end, align)
-            } else {
-                onSpanParsed(normalSpan, start, end, content, align)
+            when {
+                htmlSpanned != null -> {
+                    onHTMLSpannedParsed(htmlSpanned!!, start, end)
+                }
+                style != null -> {
+                    onStyleParsed(style, start, end, align)
+                }
+                else -> {
+                    onSpanParsed(normalSpan, start, end, content, align)
+                }
             }
         }
         return totalLength
     }
+
+    private fun getSizeSpan(htmlSpanned: Spanned, node: Node): SpannableStringBuilder? {
+        var dest = SpannableStringBuilder(htmlSpanned)
+        if (node.hasAttr("size")) {
+            val text = node.getText()
+            val start = htmlSpanned.indexOf(text)
+            if (start < 0) {
+                return null
+            }
+            val end = start + text.length
+            val sizeValue = node.attr("size")
+            var size: Int? = null
+            var percent: Float? = null
+            when {
+                sizeValue.endsWith("px", true) -> {
+                    size = sizeValue.substring(0, sizeValue.length - 2).toIntOrNull()
+                }
+                sizeValue.endsWith("%") -> {
+                    percent = sizeValue.substring(0, sizeValue.length - 1).toIntOrNull()
+                        ?.div(100F)
+                }
+                else -> {
+                    size = sizeValue.toIntOrNull()
+                }
+            }
+            var sizeSpan: MetricAffectingSpan? = null
+            if (size != null) {
+                sizeSpan = AbsoluteSizeSpan(size, true)
+            }
+            if (percent != null) {
+                sizeSpan = RelativeSizeSpan(percent)
+            }
+            if (sizeSpan != null) {
+                return dest.also {
+                    it.setSpan(
+                        sizeSpan,
+                        start,
+                        end,
+                        SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+            }
+            return null
+        }
+        node.childNodes().forEach { childNode ->
+            if (childNode.nodeName().equals("font", true)) {
+                getSizeSpan(dest, childNode)?.let {
+                    dest = it
+                }
+            }
+        }
+        return dest
+    }
+
+    abstract fun onHTMLSpannedParsed(htmlSpanned: Spanned, start: Int, end: Int)
 
     /**
      * 非自定义span
@@ -277,14 +363,14 @@ abstract class AbstractConvert {
             dest,
             "size=(.+?)",
             "size",
-            "<span style=\"font-size:$2; color:black\">",
-            "</span>"
+            "<font size=\"$2\">",
+            "</font>"
         )
         dest = convertHTML(
             dest,
             "font=(.+?)",
             "font",
-            "<font face=\"$2\" color=\"black\">",
+            "<font face=\"$2\">",
             "</font>"
         )
         dest = convertHTML(

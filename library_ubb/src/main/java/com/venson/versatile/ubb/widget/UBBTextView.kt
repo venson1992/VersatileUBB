@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -26,6 +27,11 @@ class UBBTextView : TouchSpanFixTextView {
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             : super(context, attrs, defStyleAttr)
+
+    fun insertSpanned(spanned: Spanned) {
+        mText.append(spanned)
+        setSpannableText(mText)
+    }
 
     /**
      * 插入span

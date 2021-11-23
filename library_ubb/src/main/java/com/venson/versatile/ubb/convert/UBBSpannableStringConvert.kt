@@ -2,6 +2,7 @@ package com.venson.versatile.ubb.convert
 
 import android.graphics.Paint
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import com.venson.versatile.ubb.style.AbstractStyle
 
 open class UBBSpannableStringConvert : AbstractConvert() {
@@ -14,6 +15,10 @@ open class UBBSpannableStringConvert : AbstractConvert() {
 
     override fun resetContent() {
         mSpannableString.clear()
+    }
+
+    override fun onHTMLSpannedParsed(htmlSpanned: Spanned, start: Int, end: Int) {
+        mSpannableString.append(htmlSpanned)
     }
 
     override fun onSpanParsed(

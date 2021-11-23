@@ -8,7 +8,7 @@ fun Node.getText(): String {
         val stringBuilder = StringBuilder()
         for (index in 0 until childSize) {
             try {
-                stringBuilder.append(childNode(index).toString())
+                stringBuilder.append(childNode(index).getText())
             } catch (e: Exception) {
                 e.printStackTrace()
             }

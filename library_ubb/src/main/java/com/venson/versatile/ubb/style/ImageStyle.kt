@@ -90,7 +90,9 @@ class ImageStyle : AbstractStyle() {
             dest = convertHTML(
                 dest,
                 getTagName(),
-                getTagName(), tagStart, tagEnd
+                getTagName(),
+                tagStart,
+                tagEnd
             )
             dest = convertHTML(
                 dest,

@@ -1,5 +1,6 @@
 package com.venson.versatile.ubb.convert
 
+import android.content.Context
 import android.graphics.Paint
 import android.os.Build
 import android.text.Html
@@ -11,34 +12,58 @@ import android.text.style.AlignmentSpan
 import android.text.style.MetricAffectingSpan
 import android.text.style.RelativeSizeSpan
 import com.venson.versatile.ubb.UBB
+import com.venson.versatile.ubb.bean.MediaTagType
 import com.venson.versatile.ubb.ext.getText
+import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
 import com.venson.versatile.ubb.style.AtSomeoneStyle
 import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.utils.convertHTML
 import com.venson.versatile.ubb.utils.getSpanByTag
+import kotlinx.coroutines.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 
-abstract class AbstractConvert {
+/**
+ * ubb解析类
+ */
+abstract class AbstractConvert(val context: Context) {
 
     companion object {
         private const val TAG = "UBBConvert"
     }
 
+    private var mBodyElement: Node? = null
+
+    private val mSpannableStringBuilder = SpannableStringBuilder()
+
+    private var mLastISpanIndex: Int = -1
+
     //预览文本内容，不包含图片和其他排除掉的标签内容
     private var mContent: String = ""
 
-    //图片路径列表
+    //图片列表
     private var mImageList: MutableList<String> = mutableListOf()
+
+    //音频列表
+    private var mAudioList: MutableList<String> = mutableListOf()
+
+    //视频列表
+    private var mVideoList: MutableList<String> = mutableListOf()
 
     /**
      * 解析ubb方法
      */
     fun parseUBB(ubb: String?) {
-        resetContent()
+        mContent = ""
+        mImageList.clear()
+        mAudioList.clear()
+        mVideoList.clear()
+        mSpannableStringBuilder.clear()
+        onParseStart()
         if (ubb.isNullOrEmpty()) {
+            onParseComplete()
             return
         }
         /*
@@ -50,49 +75,87 @@ abstract class AbstractConvert {
         转换html
          */
         val html = convertHTMLTag(ubb)
-        val bodyElement = Jsoup.parseBodyFragment(html).body()
+        val bodyElement = Jsoup.parseBodyFragment(html).body().also {
+            mBodyElement = it
+        }
         /*
         解析
          */
         onBodyElementCreated(bodyElement)
         UBB.logV(TAG, "html=${bodyElement.html()}")
-        parseChildElement(bodyElement)
+        if (isOnlyText()) {
+            mSpannableStringBuilder.append(getContent())
+            onParseComplete()
+            return
+        }
+        GlobalScope.launch(Dispatchers.IO) {
+            parseHandle()
+        }
     }
 
-    abstract fun resetContent()
+    protected suspend fun parseHandle(): SpannableStringBuilder {
+        mSpannableStringBuilder.clear()
+        val bodyElement = mBodyElement ?: let {
+            onParseComplete()
+            return mSpannableStringBuilder
+        }
+        return withContext(Dispatchers.IO) {
+            parseNode(bodyElement)
+            withContext(Dispatchers.Main) {
+                onParseComplete()
+            }
+            return@withContext mSpannableStringBuilder
+        }
+    }
+
+    abstract fun isOnlyText(): Boolean
+
+    abstract fun onParseStart()
 
     /**
      * 解析的document已经生成
      */
     private fun onBodyElementCreated(bodyElement: Element?) {
-        mContent = ""
-        mImageList.clear()
         bodyElement ?: return
         /*
         文本
          */
         mContent = bodyElement.text()
-        val imageTag = ImageStyle.Helper.getTagName()
+        /*
+        过滤媒体
+         */
         val ignoredTagList = getIgnoredConvert2Text().toMutableList()
-        if (!ignoredTagList.contains(imageTag)) {
-            ignoredTagList.add(imageTag)
+        MediaTagType.values().forEach { mediaTagType ->
+            if (!ignoredTagList.contains(mediaTagType.tagName)) {
+                ignoredTagList.add(mediaTagType.tagName)
+            }
         }
         ignoredTagList.forEach { ignoredTag ->
             bodyElement.getElementsByTag(ignoredTag).forEach { ignoredElement ->
+                val htmlCode = ignoredElement.toString()
                 mContent = mContent.replace(ignoredElement.text(), "")
-                /*
-                记录图片
-                 */
-                if (ignoredTag == imageTag) {
-                    mImageList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
+                if (ignoredTag == MediaTagType.MEDIA_IMAGE.tagName) {
+                    mImageList.add(htmlCode)
+                }
+                if (ignoredTag == MediaTagType.MEDIA_AUDIO.tagName) {
+                    mAudioList.add(htmlCode)
+                }
+                if (ignoredTag == MediaTagType.MEDIA_VIDEO.tagName) {
+                    mVideoList.add(htmlCode)
                 }
             }
         }
     }
 
+    fun getSpannableString(): SpannableStringBuilder = mSpannableStringBuilder
+
     fun getContent(): String = mContent
 
     fun getImageList(): List<String> = mImageList
+
+    fun getAudioList(): List<String> = mAudioList
+
+    fun getVideoList(): List<String> = mVideoList
 
     /**
      * 传入忽略文本的标签
@@ -100,116 +163,112 @@ abstract class AbstractConvert {
      */
     fun getIgnoredConvert2Text(): List<String> = emptyList()
 
-    abstract fun getContentLength(): Int
-
-    /**
-     * 解析样式
-     */
-    private fun parseChildElement(node: Node, align: Paint.Align = Paint.Align.LEFT): Int {
-        var totalLength = 0
-        node.childNodes().forEachIndexed { index, childNode ->
-            val childSize = childNode.childNodeSize()
-            val tagName = childNode.nodeName()
-            val normalSpan = getSpanByTag(tagName, childNode)
-            val style = getStyle(tagName, childNode, align)
-            var htmlSpanned: Spanned? = null
-            /*
-            如果p兄弟tag不是br，则追加br
-             */
-            var isNeedAddBreakLine = false
-            if (tagName.equals("p", true)) {
-                try {
-                    if (index > 0) {
-                        val preTagName = node.childNode(index - 1).nodeName()
-                        if (!preTagName.equals("br", true)) {
-                            isNeedAddBreakLine = true
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            var start = getContentLength()
-            if (isNeedAddBreakLine) {
-                val breakLineText = "\n"
-                onSpanParsed(
-                    null,
-                    start,
-                    start + breakLineText.length,
-                    breakLineText,
-                    align
-                )
-                start += breakLineText.length
-                totalLength += breakLineText.length
-            }
-            val content: String
-            val contentLength: Int
-            if (tagName.equals("br", true)
-                || (childSize <= 0 && tagName.equals("p", true))
-            ) {
-                content = "\n"
-                contentLength = content.length
-            } else if (normalSpan == null || style != null || childSize <= 0) {
-                if (normalSpan == null
-                    && style == null
-                    && (tagName.equals("span", true)
-                            || tagName.equals("font", true))
-                ) {
-                    htmlSpanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        Html.fromHtml(childNode.toString(), Html.FROM_HTML_MODE_LEGACY)
-                    } else {
-                        Html.fromHtml(childNode.toString())
-                    }
-                    getSizeSpan(htmlSpanned, childNode)?.let {
-                        htmlSpanned = it
-                    }
-                    content = htmlSpanned.toString()
-                    contentLength = content.length
-                } else {
-                    val text = style?.getSpanText() ?: childNode.getText()
-                    if (text.isEmpty()) {
-                        return@forEachIndexed
-                    }
-                    content = text
-                    contentLength = text.length
-                }
-            } else {
-                val nowAlign = if (normalSpan is AlignmentSpan.Standard) {
-                    when (normalSpan.alignment) {
-                        Layout.Alignment.ALIGN_CENTER -> {
-                            Paint.Align.CENTER
-                        }
-                        Layout.Alignment.ALIGN_OPPOSITE -> {
-                            Paint.Align.RIGHT
-                        }
-                        else -> {
-                            Paint.Align.LEFT
-                        }
-                    }
-                } else {
-                    align
-                }
-                content = ""
-                contentLength = parseChildElement(childNode, nowAlign)
-            }
-            totalLength += contentLength
-            val end = start + contentLength
-            when {
-                htmlSpanned != null -> {
-                    onHTMLSpannedParsed(htmlSpanned!!, start, end)
-                }
-                style != null -> {
-                    onStyleParsed(style, start, end, align)
-                }
-                else -> {
-                    onSpanParsed(normalSpan, start, end, content, align)
-                }
-            }
-        }
-        return totalLength
+    fun getContentLength(): Int {
+        return mSpannableStringBuilder.length
     }
 
-    private fun getSizeSpan(htmlSpanned: Spanned, node: Node): SpannableStringBuilder? {
+    /**
+     * 解析node
+     */
+    private suspend fun parseNode(node: Node, align: Paint.Align = Paint.Align.LEFT) {
+        withContext(Dispatchers.IO) {
+            val nodeName = node.nodeName()
+            val htmlCode = node.toString()
+            /*
+            文本样式
+             */
+            if (nodeName.equals("span", true)
+                || nodeName.equals("font", true)
+            ) {
+                var htmlSpanned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    Html.fromHtml(htmlCode, Html.FROM_HTML_MODE_LEGACY)
+                } else {
+                    Html.fromHtml(htmlCode)
+                }
+                parseSizeSpan(htmlSpanned, node)?.let {
+                    htmlSpanned = it
+                }
+                mSpannableStringBuilder.append(htmlSpanned)
+                return@withContext
+            }
+            val childNodeSize = node.childNodeSize()
+            /*
+            换行
+             */
+            if (nodeName.equals("br", true)
+                || (childNodeSize <= 0
+                        && nodeName.equals("p", true))
+            ) {
+                mSpannableStringBuilder.append("\n")
+                return@withContext
+            }
+            val normalSpan = getSpanByTag(nodeName, node)
+            val customStyle = if (normalSpan != null) {
+                null
+            } else {
+                getStyle(nodeName, node, align)
+            }
+            if (customStyle != null) {
+                onInsertStyle(customStyle)
+                return@withContext
+            }
+            if (childNodeSize <= 0) {
+                if (normalSpan != null) {
+                    insertSpan(node.getText(), normalSpan)
+                    return@withContext
+                }
+                mSpannableStringBuilder.append(node.getText())
+                return@withContext
+            }
+            /*
+            子级标签适用的align样式
+             */
+            val nextAlign = if (normalSpan != null && normalSpan is AlignmentSpan.Standard) {
+                when (normalSpan.alignment) {
+                    Layout.Alignment.ALIGN_CENTER -> {
+                        Paint.Align.CENTER
+                    }
+                    Layout.Alignment.ALIGN_OPPOSITE -> {
+                        Paint.Align.RIGHT
+                    }
+                    else -> {
+                        Paint.Align.LEFT
+                    }
+                }
+            } else {
+                align
+            }
+            val start = mSpannableStringBuilder.length
+            /*
+            子级标签
+             */
+            for (childIndex in 0 until childNodeSize) {
+                val childNode = node.childNode(childIndex)
+                val childNodeName = childNode.nodeName()
+                if (childNodeName.equals("p", true) && childIndex > 0) {
+                    val preTagName = node.childNode(childIndex - 1).nodeName()
+                    if (!preTagName.equals("br", true)) {
+                        withContext(Dispatchers.Main) {
+                            mSpannableStringBuilder.append("\n")
+                        }
+                    }
+                }
+                parseNode(childNode, nextAlign)
+            }
+            val end = mSpannableStringBuilder.length
+            mSpannableStringBuilder.setSpan(
+                normalSpan,
+                start,
+                end,
+                SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+    }
+
+    /**
+     * 解析文本大小
+     */
+    private fun parseSizeSpan(htmlSpanned: Spanned, node: Node): SpannableStringBuilder? {
         var dest = SpannableStringBuilder(htmlSpanned)
         if (node.hasAttr("size")) {
             val text = node.getText()
@@ -254,7 +313,7 @@ abstract class AbstractConvert {
         }
         node.childNodes().forEach { childNode ->
             if (childNode.nodeName().equals("font", true)) {
-                getSizeSpan(dest, childNode)?.let {
+                parseSizeSpan(dest, childNode)?.let {
                     dest = it
                 }
             }
@@ -262,18 +321,53 @@ abstract class AbstractConvert {
         return dest
     }
 
-    abstract fun onHTMLSpannedParsed(htmlSpanned: Spanned, start: Int, end: Int)
+    protected open suspend fun onInsertStyle(customStyle: AbstractStyle) {
+        if (customStyle is ImageStyle) {
+            withContext(Dispatchers.IO) {
+                customStyle.getImageSpan(context, 500)?.let { imageSpan ->
+                    insertSpan(customStyle.getSpanText(), imageSpan)
+                }
+            }
+            return
+        }
+        customStyle.getSpan()?.let { span ->
+            insertSpan(customStyle.getSpanText(), span)
+        }
+    }
 
-    /**
-     * 非自定义span
-     */
-    abstract fun onSpanParsed(
-        span: Any?,
-        start: Int,
-        end: Int,
-        content: String? = null,
-        align: Paint.Align
-    )
+    protected open suspend fun insertSpan(content: String, span: Any) {
+        withContext(Dispatchers.Main) {
+            if (mSpannableStringBuilder.isNotEmpty()) {
+                if (span is ISpan) {
+                    if (span.isStartSingleLine()) {
+                        if (!mSpannableStringBuilder.endsWith("\n")) {
+                            mSpannableStringBuilder.append("\n")
+                        }
+                    }
+                } else {
+                    if (mLastISpanIndex == mSpannableStringBuilder.length) {
+                        mSpannableStringBuilder.append("\n")
+                    }
+                }
+            }
+            val start = mSpannableStringBuilder.length
+            mSpannableStringBuilder.append(content)
+            val end = mSpannableStringBuilder.length
+            mSpannableStringBuilder.setSpan(
+                span,
+                start,
+                end,
+                SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            if (span is ISpan) {
+                if (span.isEndSingleLine()) {
+                    if (!mSpannableStringBuilder.endsWith("\n")) {
+                        mLastISpanIndex = mSpannableStringBuilder.length
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * 返回一些自定义标签span
@@ -284,16 +378,6 @@ abstract class AbstractConvert {
         }
         return null
     }
-
-    /**
-     * 自定义span
-     */
-    abstract fun onStyleParsed(
-        style: AbstractStyle,
-        start: Int,
-        end: Int,
-        align: Paint.Align
-    )
 
     /**
      * 替换成html
@@ -404,4 +488,6 @@ abstract class AbstractConvert {
         }
         return dest
     }
+
+    abstract fun onParseComplete()
 }

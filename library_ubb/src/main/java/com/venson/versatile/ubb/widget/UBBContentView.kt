@@ -52,8 +52,8 @@ class UBBContentView : LinearLayout {
         removeAllViews()
         mJob?.cancel()
         mJob = GlobalScope.async(Dispatchers.IO) {
-            val ubbConvert = UBBContentViewConvert()
-            ubbConvert.parseUBB(ubb)
+            val ubbConvert = UBBContentViewConvert(context)
+            ubbConvert.parseUBB4SpannableStringBuilder(ubb)
             val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
             mAdapter?.let { adapter ->
                 fillContent(adapter, ubbContentBeanList)

@@ -1,6 +1,6 @@
 package com.venson.versatile.ubb.convert
 
-import android.graphics.Paint
+import android.content.Context
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.span.ImageSpan
@@ -9,39 +9,43 @@ import com.venson.versatile.ubb.style.ImageStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-open class UBBContentViewConvert : UBBSpannableStringConvert() {
+open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
 
     private val mMediaSpanList = mutableListOf<Any>()
     private val mMediaSpanRangeList = mutableListOf<IntRange>()
 
-    override fun resetContent() {
-        super.resetContent()
+    override fun isOnlyText(): Boolean {
+        return true
+    }
+
+    override fun onParseStart() {
         mMediaSpanList.clear()
         mMediaSpanRangeList.clear()
     }
 
-    override fun onSpanParsed(
-        span: Any?,
-        start: Int,
-        end: Int,
-        content: String?,
-        align: Paint.Align
-    ) {
-        super.onSpanParsed(span, start, end, content, align)
-        span?.let {
-            if (span is ImageSpan) {
-                mMediaSpanList.add(span)
-                mMediaSpanRangeList.add(IntRange(start, end))
-            }
+    override fun onParseComplete() {
+
+    }
+
+    override suspend fun onInsertStyle(customStyle: AbstractStyle) {
+        super.onInsertStyle(customStyle)
+        if (customStyle is ImageStyle) {
+
         }
     }
 
-    override fun onStyleParsed(style: AbstractStyle, start: Int, end: Int, align: Paint.Align) {
-        super.onStyleParsed(style, start, end, align)
-        if (style is ImageStyle) {
-            mMediaSpanList.add(style)
-            mMediaSpanRangeList.add(IntRange(start, end))
+    override suspend fun insertSpan(content: String, span: Any) {
+        super.insertSpan(content, span)
+        if (span is ImageSpan) {
+            mMediaSpanList.add(span)
+            val end = getSpannableString().length
+            mMediaSpanRangeList.add(IntRange(end - content.length, end))
         }
+    }
+
+    suspend fun parseUBB4SpannableStringBuilder(ubb: String?) {
+        super.parseUBB(ubb)
+        parseHandle()
     }
 
     suspend fun getUBBContentBeanList(): List<UBBContentBean> {
@@ -81,16 +85,21 @@ open class UBBContentViewConvert : UBBSpannableStringConvert() {
                         }
                     )
                 }
-                if (any is ImageSpan) {
-                    any.getStyle()
-                } else if (any is ImageStyle) {
-                    any
-                } else {
-                    null
-                }?.let { style ->
+                val imageStyle = when (any) {
+                    is ImageSpan -> {
+                        any.getStyle()
+                    }
+                    is ImageStyle -> {
+                        any
+                    }
+                    else -> {
+                        null
+                    }
+                }
+                if (imageStyle != null) {
                     ubbContentBeanList.add(
                         UBBContentBean().also {
-                            it.style = style
+                            it.style = imageStyle
                             it.type = UBBContentAdapter.TYPE_IMAGE
                         }
                     )

@@ -15,7 +15,7 @@ import androidx.viewbinding.ViewBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.venson.versatile.ubb.ImageEngine
 import com.venson.versatile.ubb.UBB
-import com.venson.versatile.ubb.convert.UBBSpannableStringConvert
+import com.venson.versatile.ubb.convert.UBBSimpleConvert
 import com.venson.versatile.ubb.demo.databinding.ActivityMainBinding
 import com.venson.versatile.ubb.demo.databinding.ItemLayoutContentBinding
 
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
             }
             binding.titleView.text = dataBean?.title ?: ""
             val ubb = dataBean?.content ?: ""
-            val spannableStringUBBConvert = UBBSpannableStringConvert()
+            val spannableStringUBBConvert = UBBSimpleConvert(this@MainActivity)
             spannableStringUBBConvert.parseUBB(ubb)
             val content = spannableStringUBBConvert.getContent()
             if (content.isEmpty()) {

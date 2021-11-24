@@ -19,6 +19,9 @@ import kotlin.math.roundToInt
 
 fun Uri?.getRealPath(context: Context): String? {
     this ?: return null
+    if (scheme?.startsWith("http", true) == true) {
+        return toString()
+    }
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
         && DocumentsContract.isDocumentUri(context, this)
     ) {

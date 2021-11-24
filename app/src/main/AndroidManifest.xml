@@ -15,7 +15,13 @@
         android:theme="@style/Theme.VersatileUBB"
         tools:ignore="AllowBackup,UnusedAttribute">
         <activity
-            android:name=".ui.DetailActivity"
+            android:name=".DetailByEditTextActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DetailByTextActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DetailByContentActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

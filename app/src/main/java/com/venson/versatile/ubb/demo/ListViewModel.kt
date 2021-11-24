@@ -1,10 +1,9 @@
-package com.venson.versatile.ubb.demo.ui.home
+package com.venson.versatile.ubb.demo
 
 import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.venson.versatile.ubb.demo.DataBean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -12,7 +11,7 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 
-class HomeViewModel : ViewModel() {
+class ListViewModel : ViewModel() {
 
     val mDataList: MutableLiveData<List<DataBean>?> = MutableLiveData()
 

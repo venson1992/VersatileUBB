@@ -7,9 +7,10 @@ import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.util.AttributeSet
 import android.util.Log
-import com.venson.versatile.ubb.span.AbstractLineEnableSpan
 import com.venson.versatile.ubb.UBB
+import com.venson.versatile.ubb.convert.UBBEditTextConvert
 import com.venson.versatile.ubb.ext.getUbb
+import com.venson.versatile.ubb.span.AbstractLineEnableSpan
 import com.venson.versatile.ubb.span.AbstractReplacementSpan
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.span.ImageSpan
@@ -115,7 +116,8 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
                         }
                     } else {
                         UBB.log(logTag, "增加: start == $startPos endPos == $endPos")
-                        selectedReplacementSpans = s?.getSpans(startPos, endPos, AbstractReplacementSpan::class.java)
+                        selectedReplacementSpans =
+                            s?.getSpans(startPos, endPos, AbstractReplacementSpan::class.java)
                         selectedReplacementSpans?.let { spans ->
                             changedListener.onChanged(spans, true)
                         }
@@ -392,7 +394,8 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
      * 设置ubb
      */
     fun setUBB(ubb: String) {
-
+        val ubbEditTextConvert = UBBEditTextConvert(this)
+        ubbEditTextConvert.parseUBB(ubb)
     }
 
     /**
@@ -497,7 +500,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
             ssb.append(" ")
             ssb.setSpan(span, 0, 1, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE)
         } else {
-            ssb.append(span.getText())
+            ssb.append(span.getSpanText())
             ssb.setSpan(span, 0, ssb.length, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         editableText.replace(start, end, ssb)

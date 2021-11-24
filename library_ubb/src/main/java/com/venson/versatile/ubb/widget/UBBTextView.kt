@@ -5,9 +5,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.text.Spannable
 import android.text.SpannableStringBuilder
-import android.text.Spanned
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import com.venson.versatile.ubb.fix.TouchSpanFixTextView
 import com.venson.versatile.ubb.span.ISpan
@@ -28,60 +26,47 @@ class UBBTextView : TouchSpanFixTextView {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             : super(context, attrs, defStyleAttr)
 
-    fun insertSpanned(spanned: Spanned) {
-        mText.append(spanned)
+    fun appendText(charSequence: CharSequence) {
+        mText.append(charSequence)
         setSpannableText(mText)
     }
 
-    /**
-     * 插入span
-     */
-    fun insertSpan(span: Any?, start: Int, end: Int, content: String?, align: Paint.Align) {
-        if (span != null && span is ISpan) {
-            insertSpan(span, align)
-            return
+    fun setSpan(span: Any?, start: Int, end: Int, align: Paint.Align) {
+        span ?: return
+        if (span is ISpan) {
+            span.getClickListener()?.let {
+                setMovementMethodDefault()
+                try {
+                    mText.setSpan(
+                        object : TouchableSpan(
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT
+                        ) {
+                            override fun onSpanClick(widget: View?) {
+                                it.onClick(this@UBBTextView)
+                            }
+                        },
+                        start,
+                        end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
-        if (!content.isNullOrEmpty()) {
-            mText.append(content)
-        }
-        if (span != null) {
+        try {
             mText.setSpan(
                 span,
                 start,
                 end,
                 SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
             )
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-        setSpannableText(mText)
-    }
-
-    /**
-     * 插入span样式
-     */
-    fun insertSpan(span: ISpan, align: Paint.Align) {
-        val start: Int = mText.length
-        mText.append(span.getText())
-        val end: Int = mText.length
-        span.getClickListener()?.let {
-            setMovementMethodDefault()
-            mText.setSpan(
-                object : TouchableSpan(
-                    Color.TRANSPARENT,
-                    Color.TRANSPARENT,
-                    Color.TRANSPARENT,
-                    Color.TRANSPARENT
-                ) {
-                    override fun onSpanClick(widget: View?) {
-                        Log.d("test", "点击了span")
-                        it.onClick(this@UBBTextView)
-                    }
-                },
-                start,
-                end,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-        mText.setSpan(span, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
         setSpannableText(mText)
     }
 
@@ -94,13 +79,25 @@ class UBBTextView : TouchSpanFixTextView {
     }
 
     override fun setText(text: CharSequence?, type: BufferType?) {
-        if (text == mText) {
-            super.setText(text, type)
+        val currentString = try {
+            mText.toString()
+        } catch (e: Exception) {
+            null
         }
-        mText = if (text is SpannableStringBuilder) {
-            text
-        } else {
-            SpannableStringBuilder(text)
+        if (text?.toString() ?: "" == currentString) {
+            super.setText(text, type)
+            return
+        }
+        mText = when (text) {
+            null -> {
+                SpannableStringBuilder("")
+            }
+            is SpannableStringBuilder -> {
+                text
+            }
+            else -> {
+                SpannableStringBuilder(text)
+            }
         }
         super.setText(mText, type)
     }

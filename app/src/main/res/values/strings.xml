@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">VersatileUBB</string>
     <string name="title_activity_main">MainActivity</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="menu_detail_content">Content</string>
+    <string name="menu_detail_text">Text</string>
+    <string name="menu_detail_edit">EditText</string>
 </resources>

@@ -3,13 +3,17 @@ package com.venson.versatile.ubb.convert
 import android.content.Context
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
+import com.venson.versatile.ubb.bean.ViewHolderType
+import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.span.ImageSpan
 import com.venson.versatile.ubb.style.AbstractStyle
-import com.venson.versatile.ubb.style.ImageStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
+class UBBContentViewConvert(
+    context: Context,
+    private val ubbContentAdapter: UBBContentAdapter
+) : AbstractConvert(context) {
 
     private val mMediaSpanList = mutableListOf<Any>()
     private val mMediaSpanRangeList = mutableListOf<IntRange>()
@@ -27,16 +31,9 @@ open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
 
     }
 
-    override suspend fun onInsertStyle(customStyle: AbstractStyle) {
-        super.onInsertStyle(customStyle)
-        if (customStyle is ImageStyle) {
-
-        }
-    }
-
     override suspend fun insertSpan(content: String, span: Any) {
         super.insertSpan(content, span)
-        if (span is ImageSpan) {
+        if (span is ImageSpan || ubbContentAdapter.isCustomSpan(span)) {
             mMediaSpanList.add(span)
             val end = getSpannableString().length
             mMediaSpanRangeList.add(IntRange(end - content.length, end))
@@ -62,7 +59,7 @@ open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
                 ubbContentBeanList.add(
                     UBBContentBean().also {
                         it.text = spannableString
-                        it.type = UBBContentAdapter.TYPE_TEXT
+                        it.type = ViewHolderType.VIEW_TEXT.type
                     }
                 )
             }
@@ -81,26 +78,26 @@ open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
                     ubbContentBeanList.add(
                         UBBContentBean().also {
                             it.text = spannableString.subSequence(lastEnd, intRange.first)
-                            it.type = UBBContentAdapter.TYPE_TEXT
+                            it.type = ViewHolderType.VIEW_TEXT.type
                         }
                     )
                 }
-                val imageStyle = when (any) {
-                    is ImageSpan -> {
+                val customStyle = when (any) {
+                    is ISpan -> {
                         any.getStyle()
                     }
-                    is ImageStyle -> {
+                    is AbstractStyle -> {
                         any
                     }
                     else -> {
                         null
                     }
                 }
-                if (imageStyle != null) {
+                if (customStyle != null) {
                     ubbContentBeanList.add(
                         UBBContentBean().also {
-                            it.style = imageStyle
-                            it.type = UBBContentAdapter.TYPE_IMAGE
+                            it.style = customStyle
+                            it.type = customStyle.getHelper().getViewHolderType()
                         }
                     )
                 }
@@ -114,7 +111,7 @@ open class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
                 ubbContentBeanList.add(
                     UBBContentBean().also {
                         it.text = spannableString.subSequence(lastEnd, spannableString.length)
-                        it.type = UBBContentAdapter.TYPE_TEXT
+                        it.type = ViewHolderType.VIEW_TEXT.type
                     }
                 )
             }

@@ -9,7 +9,9 @@ import androidx.annotation.RequiresApi
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
+import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
+import com.venson.versatile.ubb.holder.DefaultViewHolder
 import kotlinx.coroutines.*
 
 /**
@@ -52,10 +54,10 @@ class UBBContentView : LinearLayout {
         removeAllViews()
         mJob?.cancel()
         mJob = GlobalScope.async(Dispatchers.IO) {
-            val ubbConvert = UBBContentViewConvert(context)
-            ubbConvert.parseUBB4SpannableStringBuilder(ubb)
-            val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
             mAdapter?.let { adapter ->
+                val ubbConvert = UBBContentViewConvert(context, adapter)
+                ubbConvert.parseUBB4SpannableStringBuilder(ubb)
+                val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
                 fillContent(adapter, ubbContentBeanList)
             }
         }
@@ -68,11 +70,19 @@ class UBBContentView : LinearLayout {
         withContext(Dispatchers.IO) {
             ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
                 withContext(Dispatchers.Main) {
-                    val holder = adapter.onCreateViewHolder(
-                        this@UBBContentView, ubbContentBean.type
-                    )
-                    addView(holder.itemView)
-                    adapter.onBindViewHolder(holder, position, ubbContentBean)
+                    if (ubbContentBean.type == ViewHolderType.VIEW_TEXT.type
+                        || ubbContentBean.style == null
+                    ) {
+                        DefaultViewHolder.build(context)
+                    } else {
+                        adapter.onCreateViewHolder(
+                            this@UBBContentView,
+                            ubbContentBean.style!!
+                        )
+                    }?.let { holder ->
+                        addView(holder.itemView)
+                        adapter.onBindViewHolder(holder, position, ubbContentBean)
+                    }
                 }
             }
         }

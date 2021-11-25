@@ -12,7 +12,7 @@ import android.text.style.AlignmentSpan
 import android.text.style.MetricAffectingSpan
 import android.text.style.RelativeSizeSpan
 import com.venson.versatile.ubb.UBB
-import com.venson.versatile.ubb.bean.MediaTagType
+import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.ext.getText
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
@@ -125,7 +125,7 @@ abstract class AbstractConvert(val context: Context) {
         过滤媒体
          */
         val ignoredTagList = getIgnoredConvert2Text().toMutableList()
-        MediaTagType.values().forEach { mediaTagType ->
+        ViewHolderType.values().forEach { mediaTagType ->
             if (!ignoredTagList.contains(mediaTagType.tagName)) {
                 ignoredTagList.add(mediaTagType.tagName)
             }
@@ -134,13 +134,13 @@ abstract class AbstractConvert(val context: Context) {
             bodyElement.getElementsByTag(ignoredTag).forEach { ignoredElement ->
                 val htmlCode = ignoredElement.toString()
                 mContent = mContent.replace(ignoredElement.text(), "")
-                if (ignoredTag == MediaTagType.MEDIA_IMAGE.tagName) {
+                if (ignoredTag == ViewHolderType.VIEW_IMAGE.tagName) {
                     mImageList.add(htmlCode)
                 }
-                if (ignoredTag == MediaTagType.MEDIA_AUDIO.tagName) {
+                if (ignoredTag == ViewHolderType.VIEW_AUDIO.tagName) {
                     mAudioList.add(htmlCode)
                 }
-                if (ignoredTag == MediaTagType.MEDIA_VIDEO.tagName) {
+                if (ignoredTag == ViewHolderType.VIEW_VIDEO.tagName) {
                     mVideoList.add(htmlCode)
                 }
             }

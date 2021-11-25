@@ -1,6 +1,8 @@
 package com.venson.versatile.ubb.style
 
 import android.graphics.Paint
+import android.view.ViewGroup
+import com.venson.versatile.ubb.widget.UBBContentView
 import org.jsoup.nodes.Node
 
 /**
@@ -74,6 +76,8 @@ abstract class AbstractStyle {
         return getText()
     }
 
+    abstract fun getViewHolder(parent: ViewGroup): UBBContentView.ViewHolder?
+
     abstract class Helper {
 
         /**
@@ -85,6 +89,11 @@ abstract class AbstractStyle {
          * 是否属于该标签
          */
         fun equalsTag(tagName: String): Boolean = getTagName().equals(tagName, true)
+
+        /**
+         * ViewHolder
+         */
+        abstract fun getViewHolderType(): Int
 
         /**
          * 转换该ubb标签为html

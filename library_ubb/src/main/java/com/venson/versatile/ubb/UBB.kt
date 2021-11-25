@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.util.Log
 import androidx.annotation.ColorInt
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
+import com.venson.versatile.ubb.adapter.UBBSimpleContentAdapter
 import com.venson.versatile.ubb.style.AbstractStyle
 
 /**
@@ -36,7 +37,7 @@ object UBB {
 
     private var imageEngine: ImageEngine? = null
 
-    private var contentAdapter: UBBContentAdapter = UBBContentAdapter()
+    private var contentAdapter: UBBContentAdapter = UBBSimpleContentAdapter()
 
     /**
      * 设置可点击的文本大小

@@ -4,13 +4,17 @@ import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Paint
 import android.net.Uri
+import android.view.ViewGroup
 import androidx.annotation.Px
 import com.bumptech.glide.Glide
 import com.venson.versatile.ubb.UBB
+import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.ext.getRealPath
 import com.venson.versatile.ubb.ext.scale
+import com.venson.versatile.ubb.holder.ImageViewHolder
 import com.venson.versatile.ubb.span.ImageSpan
 import com.venson.versatile.ubb.utils.convertHTML
+import com.venson.versatile.ubb.widget.UBBContentView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Node
@@ -73,10 +77,18 @@ class ImageStyle : AbstractStyle() {
         return " "
     }
 
+    override fun getViewHolder(parent: ViewGroup): UBBContentView.ViewHolder? {
+        return ImageViewHolder.build(parent.context)
+    }
+
     object Helper : AbstractStyle.Helper() {
 
         override fun getTagName(): String {
             return TAG_NAME
+        }
+
+        override fun getViewHolderType(): Int {
+            return ViewHolderType.VIEW_IMAGE.type
         }
 
         override fun convertUBB(source: String): String {

@@ -12,46 +12,31 @@ import com.google.android.material.shape.CornerFamily
 import com.google.android.material.shape.ShapeAppearanceModel
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.holder.AudioViewHolder
 import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.holder.ImageViewHolder
-import com.venson.versatile.ubb.holder.VideoViewHolder
+import com.venson.versatile.ubb.style.AbstractStyle
 import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.widget.UBBContentView
 
-class UBBContentAdapter {
+abstract class UBBContentAdapter {
 
-    companion object {
-        const val TYPE_TEXT = 0x00
-        const val TYPE_IMAGE = 0x12
-        const val TYPE_AUDIO = 0x13
-        const val TYPE_VIDEO = 0x14
-    }
-
-    fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UBBContentView.ViewHolder {
-        val customViewHolder = onCreateCustomViewHolder(parent, viewType)
+    fun onCreateViewHolder(
+        parent: ViewGroup,
+        customStyle: AbstractStyle
+    ): UBBContentView.ViewHolder? {
+        val customViewHolder = onCreateCustomViewHolder(parent, customStyle)
         if (customViewHolder != null) {
             return customViewHolder
         }
-        return when (viewType) {
-            TYPE_IMAGE -> {
-                ImageViewHolder.build(parent.context)
-            }
-            TYPE_VIDEO -> {
-                VideoViewHolder.build(parent.context)
-            }
-            TYPE_AUDIO -> {
-                AudioViewHolder.build(parent)
-            }
-            else -> {
-                DefaultViewHolder.build(parent.context)
-            }
-        }
+        return customStyle.getViewHolder(parent)
     }
 
-    fun onCreateCustomViewHolder(parent: ViewGroup, viewType: Int): UBBContentView.ViewHolder? {
-        return null
-    }
+    abstract fun isCustomSpan(span: Any): Boolean
+
+    abstract fun onCreateCustomViewHolder(
+        parent: ViewGroup,
+        customStyle: AbstractStyle
+    ): UBBContentView.ViewHolder?
 
     fun onBindViewHolder(
         holder: UBBContentView.ViewHolder,
@@ -125,7 +110,16 @@ class UBBContentAdapter {
             }
             Glide.with(holder.imageView).asBitmap().load(url).into(imageTarget)
         }
+        onBindCustomViewHolder(holder, position, ubbContentBean)
     }
+
+    abstract fun onBindCustomViewHolder(
+        holder: UBBContentView.ViewHolder,
+        position: Int,
+        ubbContentBean: UBBContentBean
+    )
+
+    abstract fun getTypeByStyle(customStyle: AbstractStyle): Int
 
     private fun loadPlaceholder(holder: ImageViewHolder, imageWidth: Int) {
         holder.imageView.setImageBitmap(null)

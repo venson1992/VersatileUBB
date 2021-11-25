@@ -1,8 +1,11 @@
 package com.venson.versatile.ubb.style
 
 import android.graphics.Paint
+import android.view.ViewGroup
+import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.span.AtSomeoneSpan
 import com.venson.versatile.ubb.utils.convertHTML
+import com.venson.versatile.ubb.widget.UBBContentView
 import org.jsoup.nodes.Node
 
 /**
@@ -27,9 +30,17 @@ class AtSomeoneStyle(private val align: Paint.Align = Paint.Align.LEFT) : Abstra
         return "@" + super.getSpanText()
     }
 
+    override fun getViewHolder(parent: ViewGroup): UBBContentView.ViewHolder? {
+        return null
+    }
+
     object Helper : AbstractStyle.Helper() {
 
         override fun getTagName(): String = TAG_NAME
+
+        override fun getViewHolderType(): Int {
+            return ViewHolderType.VIEW_TEXT.type
+        }
 
         override fun convertUBB(source: String): String {
             return convertHTML(

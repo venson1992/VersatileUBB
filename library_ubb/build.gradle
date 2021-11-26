@@ -66,23 +66,21 @@ project.afterEvaluate {
 }
 
 dependencies {
-    implementation 'androidx.annotation:annotation:1.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    compileOnly 'androidx.annotation:annotation:1.2.0'
     compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
-    implementation rootProject.ext.google_material
-    implementation rootProject.ext.google_flex
-    implementation rootProject.ext.androidx_core
-    implementation rootProject.ext.androidx_appcompat
+    compileOnly rootProject.ext.google_material
+    compileOnly rootProject.ext.androidx_core
+    compileOnly rootProject.ext.androidx_appcompat
     // ViewModel viewModelScope
-    implementation rootProject.ext.androidx_lifecycle_viewmodel_ktx
+    compileOnly rootProject.ext.androidx_lifecycle_viewmodel_ktx
     // LiveData
-    implementation rootProject.ext.androidx_lifecycle_livedata_ktx
+    compileOnly rootProject.ext.androidx_lifecycle_livedata_ktx
     // Lifecycles only (without ViewModel or LiveData) lifecycleScope
-    implementation rootProject.ext.androidx_lifecycle_runtime_ktx
+    compileOnly rootProject.ext.androidx_lifecycle_runtime_ktx
     // alternately - if using Java8, use the following instead of lifecycle-compiler
-    implementation rootProject.ext.androidx_lifecycle_common_ktx
+    compileOnly rootProject.ext.androidx_lifecycle_common_ktx
 //    kapt rootProject.ext.androidx_lifecycle_compiler
-    implementation rootProject.ext.androidx_constraintlayout
+    compileOnly rootProject.ext.androidx_constraintlayout
 
     testImplementation 'junit:junit:4.13.2'
 
@@ -91,12 +89,10 @@ dependencies {
     /*
     glide
      */
-    implementation "com.github.bumptech.glide:glide:${rootProject.ext.glide_version}"
-    implementation "com.github.bumptech.glide:okhttp3-integration:${rootProject.ext.glide_version}"
-    kapt "com.github.bumptech.glide:compiler:${rootProject.ext.glide_version}"
+    compileOnly "com.github.bumptech.glide:glide:${rootProject.ext.glide_version}"
 
     /*
     jsoup
      */
-    implementation "org.jsoup:jsoup:${rootProject.ext.jsoup_version}"
+    compileOnly "org.jsoup:jsoup:${rootProject.ext.jsoup_version}"
 }

@@ -18,7 +18,7 @@ class ImageViewHolder(itemView: ConstraintLayout) : UBBContentView.ViewHolder(it
 
     @Px
     fun getCornerSize(): Float {
-        return 50F
+        return 0F
     }
 
     @DrawableRes

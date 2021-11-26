@@ -14,6 +14,7 @@ import android.text.style.RelativeSizeSpan
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.ext.getText
+import com.venson.versatile.ubb.ext.isEndBreakLine
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
 import com.venson.versatile.ubb.style.AtSomeoneStyle
@@ -195,11 +196,14 @@ abstract class AbstractConvert(val context: Context) {
             /*
             换行
              */
-            if (nodeName.equals("br", true)
-                || (childNodeSize <= 0
-                        && nodeName.equals("p", true))
-            ) {
+            if (nodeName.equals("br", true)) {
                 mSpannableStringBuilder.append("\n")
+                return@withContext
+            }
+            /*
+            不处理
+             */
+            if (childNodeSize <= 0 && nodeName.equals("p", true)) {
                 return@withContext
             }
             val normalSpan = getSpanByTag(nodeName, node)
@@ -340,7 +344,7 @@ abstract class AbstractConvert(val context: Context) {
             if (mSpannableStringBuilder.isNotEmpty()) {
                 if (span is ISpan) {
                     if (span.isStartSingleLine()) {
-                        if (!mSpannableStringBuilder.endsWith("\n")) {
+                        if (!mSpannableStringBuilder.isEndBreakLine()) {
                             mSpannableStringBuilder.append("\n")
                         }
                     }
@@ -361,7 +365,7 @@ abstract class AbstractConvert(val context: Context) {
             )
             if (span is ISpan) {
                 if (span.isEndSingleLine()) {
-                    if (!mSpannableStringBuilder.endsWith("\n")) {
+                    if (!mSpannableStringBuilder.isEndBreakLine()) {
                         mLastISpanIndex = mSpannableStringBuilder.length
                     }
                 }

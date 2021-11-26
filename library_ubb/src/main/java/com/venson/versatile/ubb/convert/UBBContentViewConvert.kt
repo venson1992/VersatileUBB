@@ -28,7 +28,6 @@ class UBBContentViewConvert(
     }
 
     override fun onParseComplete() {
-
     }
 
     override suspend fun insertSpan(content: String, span: Any) {
@@ -75,12 +74,20 @@ class UBBContentViewConvert(
                 }
                 val lastEnd = lastIntRange?.last ?: 0
                 if (lastEnd < intRange.first) {
-                    ubbContentBeanList.add(
-                        UBBContentBean().also {
-                            it.text = spannableString.subSequence(lastEnd, intRange.first)
-                            it.type = ViewHolderType.VIEW_TEXT.type
-                        }
-                    )
+                    var text = spannableString.subSequence(lastEnd, intRange.first)
+                    if (text.length > 1 && text[text.length - 1] == '\n') {
+                        text = text.subSequence(0, text.length - 1)
+                    } else if (text.length == 1 && text[0] == '\n') {
+                        text = ""
+                    }
+                    if (text.isNotEmpty()) {
+                        ubbContentBeanList.add(
+                            UBBContentBean().also {
+                                it.text = text
+                                it.type = ViewHolderType.VIEW_TEXT.type
+                            }
+                        )
+                    }
                 }
                 val customStyle = when (any) {
                     is ISpan -> {

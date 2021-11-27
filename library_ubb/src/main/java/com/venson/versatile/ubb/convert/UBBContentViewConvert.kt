@@ -45,7 +45,7 @@ class UBBContentViewConvert(
         parseHandle()
     }
 
-    suspend fun getUBBContentBeanList(): List<UBBContentBean> {
+    internal suspend fun getUBBContentBeanList(): List<UBBContentBean> {
         return withContext(Dispatchers.IO) {
             val spannableString = getSpannableString()
             if (spannableString.isEmpty()) {
@@ -75,12 +75,7 @@ class UBBContentViewConvert(
                 }
                 val lastEnd = lastIntRange?.last ?: 0
                 if (lastEnd < intRange.first) {
-                    var text = spannableString.subSequence(lastEnd, intRange.first)
-                    if (text.length > 1 && text[text.length - 1] == UBB.BREAK_LINE) {
-                        text = text.subSequence(0, text.length - 1)
-                    } else if (text.length == 1 && text[0] == UBB.BREAK_LINE) {
-                        text = ""
-                    }
+                    val text = getSplitText(lastEnd, intRange.first, true)
                     if (text.isNotEmpty()) {
                         ubbContentBeanList.add(
                             UBBContentBean().also {
@@ -116,14 +111,33 @@ class UBBContentViewConvert(
              */
             val lastEnd = lastIntRange?.last ?: spannableString.length
             if (lastEnd < spannableString.length) {
-                ubbContentBeanList.add(
-                    UBBContentBean().also {
-                        it.text = spannableString.subSequence(lastEnd, spannableString.length)
-                        it.type = ViewHolderType.VIEW_TEXT.type
-                    }
-                )
+                val text = getSplitText(lastEnd, spannableString.length, false)
+                if (text.isNotEmpty()) {
+                    ubbContentBeanList.add(
+                        UBBContentBean().also {
+                            it.text = text
+                            it.type = ViewHolderType.VIEW_TEXT.type
+                        }
+                    )
+                }
             }
             return@withContext ubbContentBeanList
         }
+    }
+
+    private fun getSplitText(start: Int, end: Int, isRemoveLastBreakLine: Boolean): CharSequence {
+        val spannableString = getSpannableString()
+        var text = spannableString.subSequence(start, end)
+        if (isRemoveLastBreakLine) {
+            if (text.length > 1 && text[text.length - 1] == UBB.BREAK_LINE) {
+                text = text.subSequence(0, text.length - 1)
+            } else if (text.length == 1 && text[0] == UBB.BREAK_LINE) {
+                text = ""
+            }
+        }
+        if (text.startsWith(UBB.BREAK_LINE)) {
+            text = text.subSequence(1, text.length)
+        }
+        return text
     }
 }

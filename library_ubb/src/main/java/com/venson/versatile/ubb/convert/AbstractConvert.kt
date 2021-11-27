@@ -197,7 +197,7 @@ abstract class AbstractConvert(val context: Context) {
             换行
              */
             if (nodeName.equals("br", true)) {
-                mSpannableStringBuilder.append("\n")
+                mSpannableStringBuilder.append(UBB.BREAK_LINE)
                 return@withContext
             }
             /*
@@ -253,7 +253,7 @@ abstract class AbstractConvert(val context: Context) {
                     val preTagName = node.childNode(childIndex - 1).nodeName()
                     if (!preTagName.equals("br", true)) {
                         withContext(Dispatchers.Main) {
-                            mSpannableStringBuilder.append("\n")
+                            mSpannableStringBuilder.append(UBB.BREAK_LINE)
                         }
                     }
                 }
@@ -345,12 +345,12 @@ abstract class AbstractConvert(val context: Context) {
                 if (span is ISpan) {
                     if (span.isStartSingleLine()) {
                         if (!mSpannableStringBuilder.isEndBreakLine()) {
-                            mSpannableStringBuilder.append("\n")
+                            mSpannableStringBuilder.append(UBB.BREAK_LINE)
                         }
                     }
                 } else {
                     if (mLastISpanIndex == mSpannableStringBuilder.length) {
-                        mSpannableStringBuilder.append("\n")
+                        mSpannableStringBuilder.append(UBB.BREAK_LINE)
                     }
                 }
             }
@@ -390,7 +390,7 @@ abstract class AbstractConvert(val context: Context) {
         /*
         取消所有\n换行
          */
-        var dest = convertHTML(ubb.replace("\n", ""))
+        var dest = convertHTML(ubb.replace(UBB.BREAK_LINE.toString(), ""))
         /*
         无参标签
          */

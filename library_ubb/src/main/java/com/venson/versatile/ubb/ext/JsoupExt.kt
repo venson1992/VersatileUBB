@@ -1,5 +1,6 @@
 package com.venson.versatile.ubb.ext
 
+import com.venson.versatile.ubb.UBB
 import org.jsoup.nodes.Node
 
 fun Node.getText(): String {
@@ -17,7 +18,7 @@ fun Node.getText(): String {
     } else {
         toString()
     }
-    text = text.replace("\n", "")
-    text = text.replace("<br></br>", "\n", true)
+    text = text.replace(UBB.BREAK_LINE.toString(), "")
+    text = text.replace("<br></br>", UBB.BREAK_LINE.toString(), true)
     return text
 }

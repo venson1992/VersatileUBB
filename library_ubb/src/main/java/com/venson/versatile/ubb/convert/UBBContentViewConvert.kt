@@ -1,6 +1,7 @@
 package com.venson.versatile.ubb.convert
 
 import android.content.Context
+import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.bean.ViewHolderType
@@ -75,9 +76,9 @@ class UBBContentViewConvert(
                 val lastEnd = lastIntRange?.last ?: 0
                 if (lastEnd < intRange.first) {
                     var text = spannableString.subSequence(lastEnd, intRange.first)
-                    if (text.length > 1 && text[text.length - 1] == '\n') {
+                    if (text.length > 1 && text[text.length - 1] == UBB.BREAK_LINE) {
                         text = text.subSequence(0, text.length - 1)
-                    } else if (text.length == 1 && text[0] == '\n') {
+                    } else if (text.length == 1 && text[0] == UBB.BREAK_LINE) {
                         text = ""
                     }
                     if (text.isNotEmpty()) {

@@ -22,6 +22,7 @@ class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemV
                 FrameLayout.LayoutParams.WRAP_CONTENT
             )
         )
+        textView.setTextIsSelectable(true)
     }
 
     companion object {

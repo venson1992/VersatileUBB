@@ -387,12 +387,15 @@ abstract class AbstractConvert(val context: Context) {
      * 替换成html
      */
     private fun convertHTMLTag(ubb: String): String {
-        var dest = convertHTML(ubb)
+        /*
+        取消所有\n换行
+         */
+        var dest = convertHTML(ubb.replace("\n", ""))
         /*
         无参标签
          */
         dest = convertHTML(dest, "br", "<br>", "</br>")
-        dest = convertHTML(dest, "\\n", "<br>", "</br>")
+//        dest = convertHTML(dest, "\\n", "<br>", "</br>")
         dest = convertHTML(dest, "u", "<u>", "</u>")
         dest = convertHTML(dest, "u", "<u>", "</u>")
         dest = convertHTML(dest, "i", "<i>", "</i>")

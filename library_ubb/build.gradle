@@ -66,20 +66,14 @@ project.afterEvaluate {
 }
 
 dependencies {
-    compileOnly 'androidx.annotation:annotation:1.2.0'
     compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
+
+    //图片圆角
     compileOnly rootProject.ext.google_material
-    compileOnly rootProject.ext.androidx_core
-    compileOnly rootProject.ext.androidx_appcompat
-    // ViewModel viewModelScope
-    compileOnly rootProject.ext.androidx_lifecycle_viewmodel_ktx
-    // LiveData
-    compileOnly rootProject.ext.androidx_lifecycle_livedata_ktx
     // Lifecycles only (without ViewModel or LiveData) lifecycleScope
     compileOnly rootProject.ext.androidx_lifecycle_runtime_ktx
     // alternately - if using Java8, use the following instead of lifecycle-compiler
     compileOnly rootProject.ext.androidx_lifecycle_common_ktx
-//    kapt rootProject.ext.androidx_lifecycle_compiler
     compileOnly rootProject.ext.androidx_constraintlayout
 
     testImplementation 'junit:junit:4.13.2'

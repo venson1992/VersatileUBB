@@ -55,10 +55,8 @@ dependencies {
     kapt rootProject.ext.androidx_lifecycle_compiler
     implementation rootProject.ext.androidx_constraintlayout
 
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
 
     implementation rootProject.ext.androidx_core
     implementation rootProject.ext.androidx_appcompat

@@ -110,6 +110,7 @@ abstract class UBBContentAdapter {
     ): UBBContentView.ViewHolder?
 
     fun onBindViewHolder(
+        parent: ViewGroup,
         holder: UBBContentView.ViewHolder,
         position: Int,
         ubbContentBean: UBBContentBean
@@ -142,7 +143,7 @@ abstract class UBBContentAdapter {
             val style = ubbContentBean.style ?: return
             val url = style.getAttr()[ImageStyle.ATTR_SRC] ?: return
             holder.itemView.visibility = View.VISIBLE
-            val itemWidth = holder.itemView.measuredWidth
+            val itemWidth = parent.measuredWidth
             //自动宽度
             val imageWidth: Int = if (getImageWidth() <= 0) {
                 if (getImageWidth() == UBBContentView.IMAGE_WIDTH_WRAP) {

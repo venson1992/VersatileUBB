@@ -252,7 +252,12 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
                         )
                     }?.let { holder ->
                         addView(holder.itemView)
-                        adapter.onBindViewHolder(holder, position, ubbContentBean)
+                        adapter.onBindViewHolder(
+                            this@UBBContentView,
+                            holder,
+                            position,
+                            ubbContentBean
+                        )
                     }
                 }
             }

@@ -71,9 +71,9 @@ dependencies {
     //图片圆角
     compileOnly rootProject.ext.google_material
     // Lifecycles only (without ViewModel or LiveData) lifecycleScope
-    compileOnly rootProject.ext.androidx_lifecycle_runtime_ktx
-    compileOnly rootProject.ext.androidx_lifecycle_common_ktx
-    compileOnly rootProject.ext.androidx_constraintlayout
+    implementation rootProject.ext.androidx_lifecycle_runtime_ktx
+    implementation rootProject.ext.androidx_lifecycle_common_ktx
+    implementation rootProject.ext.androidx_constraintlayout
 
     testImplementation 'junit:junit:4.13.2'
 

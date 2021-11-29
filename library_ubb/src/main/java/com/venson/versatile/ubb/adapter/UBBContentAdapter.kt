@@ -59,7 +59,9 @@ abstract class UBBContentAdapter {
         lineSpacingMultiplier: Float,
         verticalSpacing: Int,
         imageCorners: Float,
-        imageWidth: Int
+        imageWidth: Int,
+        imagePlaceholderRes: Int,
+        imagePlaceholderRatio: String
     ) {
         mTextColor = textColor
         mTextSize = textSize
@@ -68,6 +70,8 @@ abstract class UBBContentAdapter {
         mVerticalSpacing = verticalSpacing
         mImageCorners = imageCorners
         mImageWidth = imageWidth
+        mImagePlaceholderRes = imagePlaceholderRes
+        mImagePlaceholderRatio = imagePlaceholderRatio
     }
 
     @ColorInt
@@ -90,6 +94,11 @@ abstract class UBBContentAdapter {
 
     @Px
     fun getImageWidth(): Int = mImageWidth
+
+    @Px
+    fun getImagePlaceholderRes(): Int = mImagePlaceholderRes
+
+    fun getImagePlaceholderRatio(): String = mImagePlaceholderRatio
 
     fun onCreateViewHolder(
         parent: ViewGroup,
@@ -134,7 +143,7 @@ abstract class UBBContentAdapter {
         if (holder is DefaultViewHolder) {
             holder.textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, getTextSize())
             holder.textView.setTextColor(getTextColor())
-            holder.textView.setLineSpacing(getLineSpacingExtra(), mLineSpacingMultiplier)
+            holder.textView.setLineSpacing(getLineSpacingExtra(), getLineSpacingMultiplier())
             holder.textView.setSpannableText(ubbContentBean.text)
             return
         }
@@ -228,13 +237,18 @@ abstract class UBBContentAdapter {
         holder.imageView.setImageBitmap(null)
         holder.imageView.layoutParams?.let { layoutParams ->
             if (layoutParams is ConstraintLayout.LayoutParams) {
-                layoutParams.width = imageWidth
-                layoutParams.dimensionRatio = holder.getPlaceholderRatio()
+                layoutParams.width = ConstraintLayout.LayoutParams.MATCH_PARENT
+                layoutParams.dimensionRatio = getImagePlaceholderRatio()
                 holder.imageView.layoutParams = layoutParams
             }
         }
+        val placeholder = if (getImagePlaceholderRes() == 0) {
+            R.drawable.default_drawable
+        } else {
+            getImagePlaceholderRes()
+        }
         Glide.with(holder.imageView)
-            .load(holder.getPlaceholderDrawableRes())
+            .load(placeholder)
             .into(holder.imageView)
     }
 

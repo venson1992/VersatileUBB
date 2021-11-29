@@ -7,6 +7,7 @@ import android.net.Uri
 import android.view.ViewGroup
 import androidx.annotation.Px
 import com.bumptech.glide.Glide
+import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.ext.getRealPath
@@ -49,11 +50,19 @@ class ImageStyle : AbstractStyle() {
             if (realPath.isNullOrEmpty()) {
                 return@withContext null
             }
-            val bitmap = Glide.with(context)
-                .asBitmap()
-                .load(realPath)
-                .submit()
-                .get() ?: return@withContext null
+            val bitmap = try {
+                Glide.with(context)
+                    .asBitmap()
+                    .load(realPath)
+                    .submit()
+                    .get()
+            } catch (e: Exception) {
+                Glide.with(context)
+                    .asBitmap()
+                    .load(R.drawable.default_drawable)
+                    .submit()
+                    .get()
+            }
             val scaleBitmap = bitmap.scale(maxWidth)
             return@withContext ImageSpan(
                 context,
@@ -126,7 +135,7 @@ class ImageStyle : AbstractStyle() {
                 it.putAttr(ATTR_HEIGHT, node.attr(ATTR_HEIGHT))
                 val src = node.attr(ATTR_SRC)
                 it.putAttr(ATTR_SRC, UBB.getImageEngine()?.getPath(src) ?: src)
-                it.putAttr(ATTR_ALIGN,align.name)
+                it.putAttr(ATTR_ALIGN, align.name)
             }
         }
 

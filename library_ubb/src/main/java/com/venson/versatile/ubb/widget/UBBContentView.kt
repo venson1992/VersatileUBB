@@ -202,7 +202,9 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
             mLineSpacingMultiplier,
             mVerticalSpacing,
             mImageCorners,
-            mImageWidth
+            mImageWidth,
+            mImagePlaceholderRes,
+            mImagePlaceholderRatio
         )
     }
 

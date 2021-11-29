@@ -31,6 +31,7 @@ class ImageStyle : AbstractStyle() {
         private const val TAG = "ImageStyle"
         private const val TAG_NAME = "img"
 
+        const val ATTR_ALIGN = "align"
         const val ATTR_WIDTH = "width"
         const val ATTR_HEIGHT = "height"
         const val ATTR_SRC = "src"
@@ -125,6 +126,7 @@ class ImageStyle : AbstractStyle() {
                 it.putAttr(ATTR_HEIGHT, node.attr(ATTR_HEIGHT))
                 val src = node.attr(ATTR_SRC)
                 it.putAttr(ATTR_SRC, UBB.getImageEngine()?.getPath(src) ?: src)
+                it.putAttr(ATTR_ALIGN,align.name)
             }
         }
 

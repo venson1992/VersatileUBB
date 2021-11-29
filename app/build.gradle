@@ -28,7 +28,7 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
     buildFeatures {
         viewBinding true
@@ -43,15 +43,27 @@ android {
 }
 
 dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
 
-    implementation 'androidx.core:core-ktx:1.6.0'
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.android.material:material:1.4.0'
+    //图片圆角
+    implementation rootProject.ext.google_material
+    // Lifecycles only (without ViewModel or LiveData) lifecycleScope
+    implementation rootProject.ext.androidx_lifecycle_runtime_ktx
+    implementation rootProject.ext.androidx_lifecycle_common_ktx
+    implementation rootProject.ext.androidx_lifecycle_livedata_ktx
+    implementation rootProject.ext.androidx_lifecycle_viewmodel_ktx
+    kapt rootProject.ext.androidx_lifecycle_compiler
+    implementation rootProject.ext.androidx_constraintlayout
+
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.2'
+
+    implementation rootProject.ext.androidx_core
+    implementation rootProject.ext.androidx_appcompat
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
     implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
     //room

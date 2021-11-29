@@ -11,5 +11,7 @@
             <enum name="wrap_content" value="-2" />
         </attr>
         <attr name="imageCorners" format="dimension" />
+        <attr name="imagePlaceholder" format="reference" />
+        <attr name="imagePlaceholderRatio" format="string" />
     </declare-styleable>
 </resources>

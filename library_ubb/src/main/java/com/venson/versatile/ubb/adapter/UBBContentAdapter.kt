@@ -1,9 +1,15 @@
 package com.venson.versatile.ubb.adapter
 
 import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
+import androidx.annotation.Px
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -19,6 +25,71 @@ import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.widget.UBBContentView
 
 abstract class UBBContentAdapter {
+
+    @ColorInt
+    private var mTextColor: Int = Color.BLACK
+
+    @Px
+    private var mTextSize: Float = 0F
+
+    @Px
+    private var mLineSpacingExtra: Float = 0F
+
+    @Px
+    private var mLineSpacingMultiplier: Float = 1.0F
+
+    @Px
+    private var mVerticalSpacing: Int = 0
+
+    @Px
+    private var mImageCorners: Float = 0F
+
+    @Px
+    private var mImageWidth: Int = UBBContentView.IMAGE_WIDTH_MATCH
+
+    @DrawableRes
+    private var mImagePlaceholderRes: Int = 0
+
+    private var mImagePlaceholderRatio: String = "2:1"
+
+    internal fun initParams(
+        textColor: Int,
+        textSize: Float,
+        lineSpacingExtra: Float,
+        lineSpacingMultiplier: Float,
+        verticalSpacing: Int,
+        imageCorners: Float,
+        imageWidth: Int
+    ) {
+        mTextColor = textColor
+        mTextSize = textSize
+        mLineSpacingExtra = lineSpacingExtra
+        mLineSpacingMultiplier = lineSpacingMultiplier
+        mVerticalSpacing = verticalSpacing
+        mImageCorners = imageCorners
+        mImageWidth = imageWidth
+    }
+
+    @ColorInt
+    fun getTextColor(): Int = mTextColor
+
+    @Px
+    fun getTextSize(): Float = mTextSize
+
+    @Px
+    fun getLineSpacingExtra(): Float = mLineSpacingExtra
+
+    @Px
+    fun getLineSpacingMultiplier(): Float = mLineSpacingMultiplier
+
+    @Px
+    fun getVerticalSpacing(): Int = mVerticalSpacing
+
+    @Px
+    fun getImageCorners(): Float = mImageCorners
+
+    @Px
+    fun getImageWidth(): Int = mImageWidth
 
     fun onCreateViewHolder(
         parent: ViewGroup,
@@ -43,7 +114,26 @@ abstract class UBBContentAdapter {
         position: Int,
         ubbContentBean: UBBContentBean
     ) {
+        /*
+        设置间隔
+         */
+        val topMargin = if (position == 0) {
+            0
+        } else {
+            getVerticalSpacing()
+        }
+        holder.itemView.layoutParams?.let { layoutParams ->
+            layoutParams as ViewGroup.MarginLayoutParams
+            layoutParams.topMargin = topMargin
+            holder.itemView.layoutParams = layoutParams
+        }
+        /*
+        其他
+         */
         if (holder is DefaultViewHolder) {
+            holder.textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, getTextSize())
+            holder.textView.setTextColor(getTextColor())
+            holder.textView.setLineSpacing(getLineSpacingExtra(), mLineSpacingMultiplier)
             holder.textView.setSpannableText(ubbContentBean.text)
             return
         }
@@ -51,27 +141,39 @@ abstract class UBBContentAdapter {
             holder.itemView.visibility = View.GONE
             val style = ubbContentBean.style ?: return
             val url = style.getAttr()[ImageStyle.ATTR_SRC] ?: return
-            val width = style.getAttr()[ImageStyle.ATTR_WIDTH] ?: ImageStyle.VALUE_AUTO
-            val widthPercent: Float = if (width.endsWith("%")) {
-                width.substring(0, width.length - 1).toFloatOrNull()?.div(100F) ?: 100F
-            } else {
-                100F
-            }
             holder.itemView.visibility = View.VISIBLE
             val itemWidth = holder.itemView.measuredWidth
             //自动宽度
-            val imageWidth = if (width == ImageStyle.VALUE_AUTO) {
-                itemWidth
-            } else {
-                if (widthPercent >= 1F) {
-                    itemWidth
+            val imageWidth: Int = if (getImageWidth() <= 0) {
+                if (getImageWidth() == UBBContentView.IMAGE_WIDTH_WRAP) {
+                    UBBContentView.IMAGE_WIDTH_WRAP
                 } else {
-                    itemWidth * widthPercent.toInt()
+                    UBBContentView.IMAGE_WIDTH_MATCH
                 }
+            } else {
+                getImageWidth()
+            }
+            holder.imageView.layoutParams?.let { layoutParams ->
+                layoutParams as ConstraintLayout.LayoutParams
+                when (style.getAttr(ImageStyle.ATTR_ALIGN, Paint.Align.CENTER.name)) {
+                    Paint.Align.CENTER.name -> {
+                        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+                    }
+                    Paint.Align.LEFT.name -> {
+                        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET
+                    }
+                    else -> {
+                        layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET
+                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+                    }
+                }
+                holder.imageView.layoutParams = layoutParams
             }
             holder.imageView.setTag(R.id.id_ubb_image, url)
             holder.imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
-                .setAllCorners(CornerFamily.ROUNDED, holder.getCornerSize())
+                .setAllCorners(CornerFamily.ROUNDED, getImageCorners())
                 .build()
             loadPlaceholder(holder, imageWidth)
             val imageTarget = object : CustomTarget<Bitmap>() {
@@ -82,16 +184,16 @@ abstract class UBBContentAdapter {
                     }
                     val resourceWidth = resource.width
                     val resourceHeight = resource.height
-                    val displayWidth: Int = if (width == ImageStyle.VALUE_AUTO) {
-                        if (resourceWidth <= itemWidth) {
-                            resourceWidth
-                        } else {
-                            itemWidth
-                        }
-                    } else if (widthPercent >= 1F) {
+                    val displayWidth: Int = if (imageWidth == UBBContentView.IMAGE_WIDTH_MATCH) {
                         itemWidth
+                    } else if (imageWidth == UBBContentView.IMAGE_WIDTH_WRAP) {
+                        if (resourceWidth >= itemWidth) {
+                            itemWidth
+                        } else {
+                            resourceWidth
+                        }
                     } else {
-                        itemWidth * widthPercent.toInt()
+                        imageWidth
                     }
                     holder.imageView.layoutParams?.let { layoutParams ->
                         if (layoutParams is ConstraintLayout.LayoutParams) {

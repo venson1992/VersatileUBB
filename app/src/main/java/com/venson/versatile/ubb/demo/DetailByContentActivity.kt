@@ -29,6 +29,6 @@ class DetailByContentActivity : AppCompatActivity() {
         supportActionBar?.title = UBBContentView::class.java.simpleName
         val dataBean = intent?.getParcelableExtra<DataBean>("data")
         mBinding.titleView.text = dataBean?.title ?: ""
-        mBinding.contentView.setUBB(dataBean?.content)
+        mBinding.contentView.setUBB(this, dataBean?.content)
     }
 }

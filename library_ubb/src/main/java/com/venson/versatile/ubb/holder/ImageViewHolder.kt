@@ -16,11 +16,6 @@ class ImageViewHolder(itemView: ConstraintLayout) : UBBContentView.ViewHolder(it
 
     val imageView: ShapeableImageView = ShapeableImageView(itemView.context)
 
-    @Px
-    fun getCornerSize(): Float {
-        return 0F
-    }
-
     @DrawableRes
     fun getPlaceholderDrawableRes(): Int {
         return R.drawable.default_drawable

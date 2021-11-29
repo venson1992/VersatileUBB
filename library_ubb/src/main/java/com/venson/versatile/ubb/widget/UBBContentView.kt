@@ -8,8 +8,12 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
+import androidx.annotation.DrawableRes
 import androidx.annotation.Px
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
@@ -18,41 +22,53 @@ import com.venson.versatile.ubb.bean.ViewHolderType
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
 import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.utils.TypedArrayUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 /**
  * UBB内容展示
  */
-class UBBContentView : LinearLayout {
+class UBBContentView : LinearLayout, DefaultLifecycleObserver {
 
     companion object {
-        private const val IMAGE_WIDTH_MATCH = -1
-        private const val IMAGE_WIDTH_WRAP = -2
+        const val IMAGE_WIDTH_MATCH = -1
+        const val IMAGE_WIDTH_WRAP = -2
     }
 
     @ColorInt
     private var mTextColor: Int = Color.BLACK
 
     @Px
-    private var mTextSize: Int? = null
+    private var mTextSize: Float = 0F
 
     @Px
-    private var mLineSpacingExtra: Int = 0
+    private var mLineSpacingExtra: Float = 0F
+
+    @Px
     private var mLineSpacingMultiplier: Float = 1.0F
 
     @Px
-    private var mVerticalSpacing: Float = 0F
+    private var mVerticalSpacing: Int = 0
 
     @Px
     private var mImageCorners: Float = 0F
 
+    @Px
     private var mImageWidth: Int = IMAGE_WIDTH_MATCH
+
+    @DrawableRes
+    private var mImagePlaceholderRes: Int = 0
+
+    private var mImagePlaceholderRatio: String = "2:1"
+
+    private var mUBB: String? = null
 
     private var mAdapter: UBBContentAdapter? = null
     private val mUBBContentList = mutableListOf<UBBContentBean>()
 
-    private var mJob: Job? = null
+    private var mLifecycleOwner: LifecycleOwner? = null
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -87,16 +103,30 @@ class UBBContentView : LinearLayout {
             attrs,
             R.styleable.UBBContentView
         )
+        /*
+        文本颜色
+         */
         if (array.hasValue(R.styleable.UBBContentView_android_textColor)) {
             mTextColor = array.getColor(R.styleable.UBBContentView_android_textColor, Color.BLACK)
         }
+        /*
+        文本字号
+         */
+        mTextSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_SP,
+            14F,
+            resources.displayMetrics
+        )
         if (array.hasValue(R.styleable.UBBContentView_android_textSize)) {
-            mTextSize = array.getDimensionPixelSize(
-                R.styleable.UBBContentView_android_textSize, 0
+            mTextSize = array.getDimension(
+                R.styleable.UBBContentView_android_textSize, mTextSize
             )
         }
+        /*
+        文本行间距
+         */
         if (array.hasValue(R.styleable.UBBContentView_android_lineSpacingExtra)) {
-            mLineSpacingExtra = array.getDimensionPixelSize(
+            mLineSpacingExtra = array.getDimension(
                 R.styleable.UBBContentView_android_lineSpacingExtra, mLineSpacingExtra
             )
         }
@@ -105,11 +135,17 @@ class UBBContentView : LinearLayout {
                 R.styleable.UBBContentView_android_lineSpacingMultiplier, mLineSpacingMultiplier
             )
         }
+        /*
+        媒体文件间隔
+         */
         if (array.hasValue(R.styleable.UBBContentView_android_verticalSpacing)) {
-            mVerticalSpacing = array.getDimension(
+            mVerticalSpacing = array.getDimensionPixelSize(
                 R.styleable.UBBContentView_android_verticalSpacing, mVerticalSpacing
             )
         }
+        /*
+        图片展示宽度
+         */
         if (array.hasValue(R.styleable.UBBContentView_imageWidth)) {
             val value = TypedValue()
             array.getValue(R.styleable.UBBContentView_imageWidth, value)
@@ -121,27 +157,76 @@ class UBBContentView : LinearLayout {
                 IMAGE_WIDTH_MATCH
             }
         }
+        /*
+        图片圆角
+         */
         if (array.hasValue(R.styleable.UBBContentView_imageCorners)) {
             mImageCorners = array.getDimension(
                 R.styleable.UBBContentView_imageCorners, mImageCorners
             )
         }
+        /*
+        图片占位图
+         */
+        if (array.hasValue(R.styleable.UBBContentView_imagePlaceholder)) {
+            mImagePlaceholderRes = array.getResourceId(
+                R.styleable.UBBContentView_imagePlaceholder, 0
+            )
+        }
+        val ratio = array.getString(R.styleable.UBBContentView_imagePlaceholderRatio)
+        mImagePlaceholderRatio = if (ratio.isNullOrEmpty()) {
+            "4:3"
+        } else {
+            if (!ratio.contains(":")) {
+                throw Exception("UBBContentView_imagePlaceholderRatio 必须按格式填写 w:h")
+            }
+            ratio
+        }
+        initAdapterParams()
     }
 
     fun setAdapter(adapter: UBBContentAdapter) {
         mAdapter = adapter
+        initAdapterParams()
     }
 
-    fun setUBB(ubb: String?) {
-        mUBBContentList.clear()
-        removeAllViews()
-        mJob?.cancel()
-        mJob = GlobalScope.async(Dispatchers.IO) {
-            mAdapter?.let { adapter ->
-                val ubbConvert = UBBContentViewConvert(context, adapter)
-                ubbConvert.parseUBB4SpannableStringBuilder(ubb)
-                val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
-                fillContent(adapter, ubbContentBeanList)
+    private fun initAdapterParams() {
+        val adapter = mAdapter ?: return
+        adapter.initParams(
+            mTextColor,
+            mTextSize,
+            mLineSpacingExtra,
+            mLineSpacingMultiplier,
+            mVerticalSpacing,
+            mImageCorners,
+            mImageWidth
+        )
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        mLifecycleOwner?.lifecycle?.let { lifecycle ->
+            lifecycle.removeObserver(this)
+            lifecycle.addObserver(this)
+        }
+    }
+
+    fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
+        mLifecycleOwner = lifecycleOwner
+        if (mUBB == ubb) {
+            return
+        }
+        lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            mUBBContentList.clear()
+            removeAllViews()
+            mAdapter?.let { ubbContentAdapter ->
+                withContext(Dispatchers.IO) {
+                    val ubbConvert = UBBContentViewConvert(context, ubbContentAdapter)
+                    ubbConvert.parseUBB4SpannableStringBuilder(ubb)
+                    val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
+                    fillContent(ubbContentAdapter, ubbContentBeanList)
+                    mUBB = ubb
+                }
             }
         }
     }
@@ -149,7 +234,10 @@ class UBBContentView : LinearLayout {
     /**
      * 填充视图
      */
-    suspend fun fillContent(adapter: UBBContentAdapter, ubbContentBeanList: List<UBBContentBean>) {
+    private suspend fun fillContent(
+        adapter: UBBContentAdapter,
+        ubbContentBeanList: List<UBBContentBean>
+    ) {
         withContext(Dispatchers.IO) {
             ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
                 withContext(Dispatchers.Main) {
@@ -171,16 +259,12 @@ class UBBContentView : LinearLayout {
         }
     }
 
-//    override fun onAttachedToWindow() {
-//        super.onAttachedToWindow()
-//        mJob?.cancel()
-//        mJob?.start()
-//    }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        mJob?.cancel()
+    override fun onDestroy(owner: LifecycleOwner) {
+        super.onDestroy(owner)
+        mUBBContentList.clear()
+        removeAllViews()
+        mAdapter = null
     }
 
-    open class ViewHolder(val itemView: View)
+    abstract class ViewHolder(val itemView: View)
 }

@@ -78,6 +78,10 @@ class UBBTextView : TouchSpanFixTextView {
         return mText
     }
 
+    override fun setTextSize(unit: Int, size: Float) {
+        super.setTextSize(unit, size)
+    }
+
     override fun setText(text: CharSequence?, type: BufferType?) {
         val currentString = try {
             mText.toString()

@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        kotlinVersion = '1.5.31'
+        kotlinVersion = '1.6.0'
         // Current lint target: 7.0.2+23
         gradlePluginVersion = '7.0.3'
 //        lintVersion = '30.0.2'
@@ -34,7 +34,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:$gradlePluginVersion"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
     }
 }

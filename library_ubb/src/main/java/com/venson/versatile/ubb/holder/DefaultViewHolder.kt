@@ -11,6 +11,18 @@ import com.venson.versatile.ubb.widget.UBBTextView
  */
 class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemView) {
 
+    companion object {
+
+        fun build(context: Context): DefaultViewHolder {
+            val itemView = FrameLayout(context)
+            itemView.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            return DefaultViewHolder(itemView)
+        }
+    }
+
     val textView: UBBTextView = UBBTextView(itemView.context)
 
     init {
@@ -25,15 +37,4 @@ class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemV
         textView.setTextIsSelectable(true)
     }
 
-    companion object {
-
-        fun build(context: Context): DefaultViewHolder {
-            val itemView = FrameLayout(context)
-            itemView.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            return DefaultViewHolder(itemView)
-        }
-    }
 }

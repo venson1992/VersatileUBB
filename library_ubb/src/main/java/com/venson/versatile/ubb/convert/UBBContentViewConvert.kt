@@ -4,7 +4,7 @@ import android.content.Context
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.bean.ViewHolderType
+import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.span.ImageSpan
 import com.venson.versatile.ubb.style.AbstractStyle
@@ -59,7 +59,7 @@ class UBBContentViewConvert(
                 ubbContentBeanList.add(
                     UBBContentBean().also {
                         it.text = spannableString
-                        it.type = ViewHolderType.VIEW_TEXT.type
+                        it.type = UBBViewType.VIEW_TEXT.type
                     }
                 )
             }
@@ -80,7 +80,7 @@ class UBBContentViewConvert(
                         ubbContentBeanList.add(
                             UBBContentBean().also {
                                 it.text = text
-                                it.type = ViewHolderType.VIEW_TEXT.type
+                                it.type = UBBViewType.VIEW_TEXT.type
                             }
                         )
                     }
@@ -100,7 +100,7 @@ class UBBContentViewConvert(
                     ubbContentBeanList.add(
                         UBBContentBean().also {
                             it.style = customStyle
-                            it.type = customStyle.getHelper().getViewHolderType()
+                            it.type = customStyle.getHelper().getViewType()
                         }
                     )
                 }
@@ -116,7 +116,7 @@ class UBBContentViewConvert(
                     ubbContentBeanList.add(
                         UBBContentBean().also {
                             it.text = text
-                            it.type = ViewHolderType.VIEW_TEXT.type
+                            it.type = UBBViewType.VIEW_TEXT.type
                         }
                     )
                 }

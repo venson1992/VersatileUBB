@@ -1,6 +1,6 @@
 package com.venson.versatile.ubb.bean
 
-enum class ViewHolderType(val tagName: String, val type: Int) {
+enum class UBBViewType(val tagName: String, val type: Int) {
     VIEW_TEXT("text", 0),
     VIEW_IMAGE("img", 1),
     VIEW_AUDIO("audio", 2),

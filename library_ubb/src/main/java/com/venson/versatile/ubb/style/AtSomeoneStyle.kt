@@ -2,7 +2,7 @@ package com.venson.versatile.ubb.style
 
 import android.graphics.Paint
 import android.view.ViewGroup
-import com.venson.versatile.ubb.bean.ViewHolderType
+import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.span.AtSomeoneSpan
 import com.venson.versatile.ubb.utils.convertHTML
 import com.venson.versatile.ubb.widget.UBBContentView
@@ -38,8 +38,8 @@ class AtSomeoneStyle(private val align: Paint.Align = Paint.Align.LEFT) : Abstra
 
         override fun getTagName(): String = TAG_NAME
 
-        override fun getViewHolderType(): Int {
-            return ViewHolderType.VIEW_TEXT.type
+        override fun getViewType(): Int {
+            return UBBViewType.VIEW_TEXT.type
         }
 
         override fun convertUBB(source: String): String {

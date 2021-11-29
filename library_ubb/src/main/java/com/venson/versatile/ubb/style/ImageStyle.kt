@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import androidx.annotation.Px
 import com.bumptech.glide.Glide
 import com.venson.versatile.ubb.UBB
-import com.venson.versatile.ubb.bean.ViewHolderType
+import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.ext.getRealPath
 import com.venson.versatile.ubb.ext.scale
 import com.venson.versatile.ubb.holder.ImageViewHolder
@@ -88,8 +88,8 @@ class ImageStyle : AbstractStyle() {
             return TAG_NAME
         }
 
-        override fun getViewHolderType(): Int {
-            return ViewHolderType.VIEW_IMAGE.type
+        override fun getViewType(): Int {
+            return UBBViewType.VIEW_IMAGE.type
         }
 
         override fun convertUBB(source: String): String {

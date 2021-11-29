@@ -27,6 +27,6 @@ class UBBSimpleContentAdapter : UBBContentAdapter() {
     }
 
     override fun getTypeByStyle(customStyle: AbstractStyle): Int {
-        return customStyle.getHelper().getViewHolderType()
+        return customStyle.getHelper().getViewType()
     }
 }

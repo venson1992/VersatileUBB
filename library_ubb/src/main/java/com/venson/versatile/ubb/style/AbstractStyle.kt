@@ -93,7 +93,7 @@ abstract class AbstractStyle {
         /**
          * ViewHolder
          */
-        abstract fun getViewHolderType(): Int
+        abstract fun getViewType(): Int
 
         /**
          * 转换该ubb标签为html

@@ -18,9 +18,10 @@ import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.bean.ViewHolderType
+import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
 import com.venson.versatile.ubb.holder.DefaultViewHolder
+import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.utils.TypedArrayUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,7 +69,9 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     private var mAdapter: UBBContentAdapter? = null
     private val mUBBContentList = mutableListOf<UBBContentBean>()
 
-    private var mLifecycleOwner: LifecycleOwner? = null
+    private val mUBBContentMap = mutableMapOf<Int, MutableList<String>>()
+
+    private var mOnContentClickListener: OnContentClickListener? = null
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -203,21 +206,17 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
         )
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        mLifecycleOwner?.lifecycle?.let { lifecycle ->
+    fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
+        lifecycleOwner.lifecycle.let { lifecycle ->
             lifecycle.removeObserver(this)
             lifecycle.addObserver(this)
         }
-    }
-
-    fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
-        mLifecycleOwner = lifecycleOwner
         if (mUBB == ubb) {
             return
         }
         lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
             mUBBContentList.clear()
+            mUBBContentMap.clear()
             removeAllViews()
             mAdapter?.let { ubbContentAdapter ->
                 withContext(Dispatchers.IO) {
@@ -240,10 +239,20 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     ) {
         withContext(Dispatchers.IO) {
             ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
+                val type = ubbContentBean.type
+                val contentList = mUBBContentMap[type] ?: let {
+                    val list = mutableListOf<String>()
+                    mUBBContentMap[type] = list
+                    list
+                }
+                val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
+                    ubbContentBean.style?.getAttr()?.get(ImageStyle.ATTR_SRC) ?: ""
+                } else {
+                    ""
+                }
+                contentList.add(data)
                 withContext(Dispatchers.Main) {
-                    if (ubbContentBean.type == ViewHolderType.VIEW_TEXT.type
-                        || ubbContentBean.style == null
-                    ) {
+                    if (type == UBBViewType.VIEW_TEXT.type || ubbContentBean.style == null) {
                         DefaultViewHolder.build(context)
                     } else {
                         adapter.onCreateViewHolder(
@@ -258,6 +267,14 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
                             position,
                             ubbContentBean
                         )
+                        holder.itemView.setOnClickListener {
+                            mOnContentClickListener?.onClick(
+                                type,
+                                data,
+                                contentList,
+                                contentList.indexOf(data)
+                            )
+                        }
                     }
                 }
             }
@@ -267,9 +284,24 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         mUBBContentList.clear()
+        mUBBContentMap.clear()
         removeAllViews()
         mAdapter = null
     }
 
+    fun setOnContentClickListener(listener: OnContentClickListener) {
+        mOnContentClickListener = listener
+    }
+
     abstract class ViewHolder(val itemView: View)
+
+    interface OnContentClickListener {
+
+        fun onClick(
+            type: Int,
+            data: String,
+            dataList: MutableList<String>,
+            position: Int
+        )
+    }
 }

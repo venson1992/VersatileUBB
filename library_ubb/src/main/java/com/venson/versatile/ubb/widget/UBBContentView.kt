@@ -6,6 +6,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
@@ -21,6 +22,7 @@ import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
 import com.venson.versatile.ubb.holder.DefaultViewHolder
+import com.venson.versatile.ubb.holder.ImageViewHolder
 import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.utils.TypedArrayUtils
 import kotlinx.coroutines.Dispatchers
@@ -70,8 +72,9 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     private val mUBBContentList = mutableListOf<UBBContentBean>()
 
     private val mUBBContentMap = mutableMapOf<Int, MutableList<String>>()
+    private val mUBBViewMap = mutableMapOf<Int, MutableList<View>>()
 
-    private var mOnContentClickListener: OnContentClickListener? = null
+    private var mOnImageClickListener: OnImageClickListener? = null
 
     constructor(context: Context) : this(context, null)
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
@@ -219,6 +222,7 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
         lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
             mUBBContentList.clear()
             mUBBContentMap.clear()
+            mUBBViewMap.clear()
             removeAllViews()
             mAdapter?.let { ubbContentAdapter ->
                 withContext(Dispatchers.IO) {
@@ -247,12 +251,11 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
                     mUBBContentMap[type] = list
                     list
                 }
-                val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
-                    ubbContentBean.style?.getAttr()?.get(ImageStyle.ATTR_SRC) ?: ""
-                } else {
-                    ""
+                val viewList = mUBBViewMap[type] ?: let {
+                    val list = mutableListOf<View>()
+                    mUBBViewMap[type] = list
+                    list
                 }
-                contentList.add(data)
                 withContext(Dispatchers.Main) {
                     if (type == UBBViewType.VIEW_TEXT.type || ubbContentBean.style == null) {
                         DefaultViewHolder.build(context)
@@ -269,18 +272,39 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
                             position,
                             ubbContentBean
                         )
-                        holder.itemView.setOnClickListener {
-                            mOnContentClickListener?.onClick(
-                                type,
-                                data,
-                                contentList,
-                                contentList.indexOf(data)
-                            )
+                        if (holder is ImageViewHolder) {
+                            val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
+                                (ubbContentBean.style as? ImageStyle)?.getRealPath(context) ?: ""
+                            } else {
+                                ""
+                            }
+                            contentList.add(data)
+                            viewList.add(holder.imageView)
+                            holder.imageView.setOnClickListener {
+                                mOnImageClickListener?.onClick(
+                                    contentList,
+                                    contentList.indexOf(data),
+                                    holder.imageView
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    fun getImageChildViewByIndex(index: Int): ImageView? {
+        return try {
+            mUBBViewMap[ImageStyle.Helper.getViewType()]?.get(index) as? ImageView
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun getImageChildViewTopByIndex(index: Int): Int {
+        return (getImageChildViewByIndex(index)?.parent as? View)?.top ?: 0
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
@@ -291,19 +315,13 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
         mAdapter = null
     }
 
-    fun setOnContentClickListener(listener: OnContentClickListener) {
-        mOnContentClickListener = listener
+    fun setOnImageClickListener(listener: OnImageClickListener) {
+        mOnImageClickListener = listener
     }
 
     abstract class ViewHolder(val itemView: View)
 
-    interface OnContentClickListener {
-
-        fun onClick(
-            type: Int,
-            data: String,
-            dataList: MutableList<String>,
-            position: Int
-        )
+    interface OnImageClickListener {
+        fun onClick(pathList: List<String>, index: Int, view: ImageView)
     }
 }

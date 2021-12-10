@@ -14,7 +14,6 @@ android {
         targetSdkVersion TARGET_SDK_VERSION as int
         versionCode BUILD_VERSION_INT as int
         versionName BUILD_VERSION
-        consumerProguardFiles "consumer-rules.pro"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

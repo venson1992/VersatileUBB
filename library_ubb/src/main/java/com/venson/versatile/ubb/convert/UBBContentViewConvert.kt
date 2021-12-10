@@ -5,8 +5,8 @@ import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.bean.UBBViewType
+import com.venson.versatile.ubb.span.GlideImageSpan
 import com.venson.versatile.ubb.span.ISpan
-import com.venson.versatile.ubb.span.ImageSpan
 import com.venson.versatile.ubb.style.AbstractStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,7 +33,7 @@ class UBBContentViewConvert(
 
     override suspend fun insertSpan(content: String, span: Any) {
         super.insertSpan(content, span)
-        if (span is ImageSpan || ubbContentAdapter.isCustomSpan(span)) {
+        if (span is GlideImageSpan || ubbContentAdapter.isCustomSpan(span)) {
             mMediaSpanList.add(span)
             val end = getSpannableString().length
             mMediaSpanRangeList.add(IntRange(end - content.length, end))

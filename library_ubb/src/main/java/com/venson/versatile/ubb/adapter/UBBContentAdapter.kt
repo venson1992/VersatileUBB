@@ -205,14 +205,15 @@ abstract class UBBContentAdapter {
                     } else {
                         imageWidth
                     }
+                    val displayHeight: Int = displayWidth.times(resourceHeight).div(resourceWidth)
                     holder.imageView.layoutParams?.let { layoutParams ->
                         if (layoutParams is ConstraintLayout.LayoutParams) {
                             layoutParams.width = displayWidth
-                            layoutParams.dimensionRatio = "$resourceWidth:$resourceHeight"
+                            layoutParams.height = displayHeight
                             holder.imageView.layoutParams = layoutParams
                         }
                     }
-                    Glide.with(holder.imageView).load(url).into(holder.imageView)
+                    Glide.with(holder.imageView).asDrawable().load(url).into(holder.imageView)
                 }
 
                 override fun onLoadCleared(placeholder: Drawable?) {

@@ -10,10 +10,7 @@ import android.util.Log
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.convert.UBBEditTextConvert
 import com.venson.versatile.ubb.ext.getUbb
-import com.venson.versatile.ubb.span.AbstractLineEnableSpan
-import com.venson.versatile.ubb.span.AbstractReplacementSpan
-import com.venson.versatile.ubb.span.ISpan
-import com.venson.versatile.ubb.span.ImageSpan
+import com.venson.versatile.ubb.span.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -496,7 +493,7 @@ class UBBEditText : androidx.appcompat.widget.AppCompatEditText {
             }
         }
         val ssb = SpannableStringBuilder()
-        if (span is ImageSpan) {
+        if (span is GlideImageSpan) {
             ssb.append(" ")
             ssb.setSpan(span, 0, 1, SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE)
         } else {

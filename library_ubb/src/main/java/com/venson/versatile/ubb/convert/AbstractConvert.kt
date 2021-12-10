@@ -15,6 +15,7 @@ import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.ext.getText
 import com.venson.versatile.ubb.ext.isEndBreakLine
+import com.venson.versatile.ubb.span.GlideImageSpan
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
 import com.venson.versatile.ubb.style.AtSomeoneStyle
@@ -45,7 +46,8 @@ abstract class AbstractConvert(val context: Context) {
     private var mContent: String = ""
 
     //图片列表
-    private var mImageList: MutableList<String> = mutableListOf()
+    private var mImageCodeList: MutableList<String> = mutableListOf()
+    private var mImageSrcList: MutableList<String> = mutableListOf()
 
     //音频列表
     private var mAudioList: MutableList<String> = mutableListOf()
@@ -58,7 +60,8 @@ abstract class AbstractConvert(val context: Context) {
      */
     fun parseUBB(ubb: String?) {
         mContent = ""
-        mImageList.clear()
+        mImageCodeList.clear()
+        mImageSrcList.clear()
         mAudioList.clear()
         mVideoList.clear()
         mSpannableStringBuilder.clear()
@@ -136,7 +139,8 @@ abstract class AbstractConvert(val context: Context) {
                 val htmlCode = ignoredElement.toString()
                 mContent = mContent.replace(ignoredElement.text(), "")
                 if (ignoredTag == UBBViewType.VIEW_IMAGE.tagName) {
-                    mImageList.add(htmlCode)
+                    mImageCodeList.add(htmlCode)
+                    mImageSrcList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
                 }
                 if (ignoredTag == UBBViewType.VIEW_AUDIO.tagName) {
                     mAudioList.add(htmlCode)
@@ -152,7 +156,9 @@ abstract class AbstractConvert(val context: Context) {
 
     fun getContent(): String = mContent
 
-    fun getImageList(): List<String> = mImageList
+    fun getImageCodeList(): List<String> = mImageCodeList
+
+    fun getImageSrcList(): List<String> = mImageSrcList
 
     fun getAudioList(): List<String> = mAudioList
 
@@ -328,15 +334,20 @@ abstract class AbstractConvert(val context: Context) {
     protected open suspend fun onInsertStyle(customStyle: AbstractStyle) {
         if (customStyle is ImageStyle) {
             withContext(Dispatchers.IO) {
-                customStyle.getImageSpan(context, 500)?.let { imageSpan ->
-                    insertSpan(customStyle.getSpanText(), imageSpan)
-                }
+                insertSpan(
+                    customStyle.getSpanText(),
+                    customStyle.getImageSpan(context, 500, getImageLoadSuccessListener())
+                )
             }
             return
         }
         customStyle.getSpan()?.let { span ->
             insertSpan(customStyle.getSpanText(), span)
         }
+    }
+
+    protected open fun getImageLoadSuccessListener(): GlideImageSpan.OnImageLoadSuccessListener? {
+        return null
     }
 
     protected open suspend fun insertSpan(content: String, span: Any) {

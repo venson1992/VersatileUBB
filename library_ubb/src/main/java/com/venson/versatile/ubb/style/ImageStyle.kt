@@ -6,14 +6,12 @@ import android.graphics.Paint
 import android.net.Uri
 import android.view.ViewGroup
 import androidx.annotation.Px
-import com.bumptech.glide.Glide
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.ext.getRealPath
-import com.venson.versatile.ubb.ext.scale
 import com.venson.versatile.ubb.holder.ImageViewHolder
-import com.venson.versatile.ubb.span.ImageSpan
+import com.venson.versatile.ubb.span.GlideImageSpan
 import com.venson.versatile.ubb.utils.convertHTML
 import com.venson.versatile.ubb.widget.UBBContentView
 import kotlinx.coroutines.Dispatchers
@@ -40,34 +38,35 @@ class ImageStyle : AbstractStyle() {
         const val VALUE_AUTO = "auto"
     }
 
+    /**
+     * 获取路径
+     */
+    fun getPath(): String {
+        return getAttr(ATTR_SRC)
+    }
+
+    /**
+     * 获取真实路径
+     */
+    fun getRealPath(context: Context): String? {
+        val src = getPath()
+        val uri = Uri.parse(src)
+        return uri.getRealPath(context)
+    }
+
     @Suppress("BlockingMethodInNonBlockingContext")
-    suspend fun getImageSpan(context: Context, @Px maxWidth: Int): ImageSpan? {
+    suspend fun getImageSpan(
+        context: Context,
+        @Px maxSize: Int,
+        listener: GlideImageSpan.OnImageLoadSuccessListener? = null
+    ): GlideImageSpan {
         return withContext(Dispatchers.IO) {
-            val src = getAttr(ATTR_SRC) as? String ?: ""
-            val uri = Uri.parse(src)
-            val realPath = uri.getRealPath(context)
-            UBB.log(TAG, "getImageSpan=$realPath")
-            if (realPath.isNullOrEmpty()) {
-                return@withContext null
-            }
-            val bitmap = try {
-                Glide.with(context)
-                    .asBitmap()
-                    .load(realPath)
-                    .submit()
-                    .get()
-            } catch (e: Exception) {
-                Glide.with(context)
-                    .asBitmap()
-                    .load(R.drawable.default_drawable)
-                    .submit()
-                    .get()
-            }
-            val scaleBitmap = bitmap.scale(maxWidth)
-            return@withContext ImageSpan(
+            return@withContext GlideImageSpan(
                 context,
-                scaleBitmap,
-                this@ImageStyle
+                this@ImageStyle,
+                R.drawable.default_drawable,
+                maxSize,
+                listener
             )
         }
     }

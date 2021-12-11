@@ -87,6 +87,6 @@ dependencies {
      */
     implementation "org.jsoup:jsoup:${rootProject.ext.jsoup_version}"
 
-    implementation 'com.github.li-xiaojun:XPopup:2.6.9'
+//    implementation 'com.github.li-xiaojun:XPopup:2.6.9'
 
 }

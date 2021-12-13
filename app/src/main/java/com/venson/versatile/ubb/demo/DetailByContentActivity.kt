@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import com.lxj.xpopup.XPopup
+import com.lxj.xpopup.util.SmartGlideImageLoader
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailBinding
 import com.venson.versatile.ubb.widget.UBBContentView
 
@@ -33,24 +35,24 @@ class DetailByContentActivity : AppCompatActivity() {
         mBinding.contentView.setUBB(this, dataBean?.content)
         mBinding.contentView.setOnImageClickListener(object : UBBContentView.OnImageClickListener {
             override fun onClick(pathList: List<String>, index: Int, view: ImageView) {
-//                XPopup.Builder(view.context)
-//                    .asImageViewer(
-//                        view,
-//                        index,
-//                        pathList,
-//                        { popupView, position ->
-//                            mBinding.contentView.getImageChildViewByIndex(position)
-//                                ?.let { targetView ->
-//                                    mBinding.scrollView.scrollTo(
-//                                        0,
-//                                        mBinding.contentView.getImageChildViewTopByIndex(position)
-//                                    )
-//                                    popupView.updateSrcView(targetView)
-//                                }
-//                        },
-//                        SmartGlideImageLoader()
-//                    )
-//                    .show()
+                XPopup.Builder(view.context)
+                    .asImageViewer(
+                        view,
+                        index,
+                        pathList,
+                        { popupView, position ->
+                            mBinding.contentView.getImageChildViewByIndex(position)
+                                ?.let { targetView ->
+                                    mBinding.scrollView.scrollTo(
+                                        0,
+                                        mBinding.contentView.getImageChildViewTopByIndex(position)
+                                    )
+                                    popupView.updateSrcView(targetView)
+                                }
+                        },
+                        SmartGlideImageLoader()
+                    )
+                    .show()
             }
 
         })

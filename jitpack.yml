@@ -1,11 +1,16 @@
 jdk:
   - openjdk11
-  #before_install:
-  #  - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;16.1.4479499"
+install:
+  - echo "Install"
+  - java -version
+  - mvn install
 
-  #install:
-  #  - ./gradlew :library_log:build :library_log:publishToMavenLocal -x :library_log:test
-  #  - ./gradlew :library_lint:build :library_lint:publishToMavenLocal -x :library_lint:test
+#before_install:
+#  - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;16.1.4479499"
 
-  #  - find . -name "*.aar"
-  #  - ./gradlew :moka:build :moka:publishToMavenLocal -x :moka:test
+#install:
+#  - ./gradlew :library_log:build :library_log:publishToMavenLocal -x :library_log:test
+#  - ./gradlew :library_lint:build :library_lint:publishToMavenLocal -x :library_lint:test
+
+#  - find . -name "*.aar"
+#  - ./gradlew :moka:build :moka:publishToMavenLocal -x :moka:test

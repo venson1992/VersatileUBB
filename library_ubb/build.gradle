@@ -55,6 +55,8 @@ project.afterEvaluate {
             release(MavenPublication) {
                 // Applies the component for the release build variant.
                 from components.release
+                // optional sources
+                artifact sourcesJar
 
                 // You can then customize attributes of the publication as shown below.
                 groupId = GROUP

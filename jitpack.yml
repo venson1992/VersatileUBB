@@ -1,9 +1,9 @@
 jdk:
   - openjdk11
-#install:
-#  - echo "Install"
-#  - java -version
-#  - mvn install
+install:
+  - echo "Install"
+  - java -version
+  - mvn install
 
 #before_install:
 #  - yes | sdkmanager --uninstall "ndk-bundle" | sdkmanager --install "ndk;16.1.4479499"

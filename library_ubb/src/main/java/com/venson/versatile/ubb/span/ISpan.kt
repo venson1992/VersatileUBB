@@ -10,12 +10,12 @@ interface ISpan {
      */
     fun getStyle(): AbstractStyle
 
-    fun getTag(): String = getStyle().getHelper().getTagName()
+    fun getTagName(): String = getStyle().getTagName()
 
     /**
      * 获取当前样式的ubb代码
      */
-    fun getUBB(): String = getStyle().toUBB()
+    fun getUBB(): String
 
     /**
      * 获取当前样式的文本内容

@@ -2,26 +2,23 @@ package com.venson.versatile.ubb.widget
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.Px
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
-import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.holder.ImageViewHolder
 import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.utils.TypedArrayUtils
@@ -33,7 +30,21 @@ import kotlin.math.roundToInt
 /**
  * UBB内容展示
  */
-class UBBContentView : LinearLayout, DefaultLifecycleObserver {
+class UBBContentView : RecyclerView, DefaultLifecycleObserver {
+
+    constructor(context: Context) : this(context, null)
+
+    constructor(context: Context, attrs: AttributeSet?) : this(
+        context, attrs, androidx.recyclerview.R.attr.recyclerViewStyle
+    )
+
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        initAttrs(context, attrs)
+    }
 
     companion object {
         const val IMAGE_WIDTH_MATCH = -1
@@ -68,37 +79,17 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
 
     private var mUBB: String? = null
 
-    private var mAdapter: UBBContentAdapter? = null
+    private var mAdapter: UBBContentAdapter = UBBContentAdapter()
     private val mUBBContentList = mutableListOf<UBBContentBean>()
 
-    private val mUBBContentMap = mutableMapOf<Int, MutableList<String>>()
-    private val mUBBViewMap = mutableMapOf<Int, MutableList<View>>()
+    private val mUBBChildDataMap = mutableMapOf<Int, MutableList<String>>()
+    private val mUBBChildIndexMap = mutableMapOf<Int, MutableList<Int>>()
 
     private var mOnImageClickListener: OnImageClickListener? = null
 
-    constructor(context: Context) : this(context, null)
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
-        context,
-        attrs,
-        defStyleAttr
-    ) {
-        initAttrs(context, attrs)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    constructor(
-        context: Context,
-        attrs: AttributeSet?,
-        defStyleAttr: Int,
-        defStyleRes: Int
-    ) : super(context, attrs, defStyleAttr, defStyleRes) {
-        initAttrs(context, attrs)
-    }
-
     init {
-        orientation = VERTICAL
-        setAdapter(UBB.getContentAdapter())
+        layoutManager = LinearLayoutManager(context, VERTICAL, false)
+        setAdapter(mAdapter)
     }
 
     private fun initAttrs(context: Context, attrs: AttributeSet?) {
@@ -192,13 +183,12 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     }
 
     fun setAdapter(adapter: UBBContentAdapter) {
-        mAdapter = adapter
+        this.adapter = adapter
         initAdapterParams()
     }
 
     private fun initAdapterParams() {
-        val adapter = mAdapter ?: return
-        adapter.initParams(
+        mAdapter.initParams(
             mTextColor,
             mTextSize,
             mLineSpacingExtra,
@@ -209,6 +199,26 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
             mImagePlaceholderRes,
             mImagePlaceholderRatio
         )
+        mAdapter.setOnItemClickListener(object : UBBContentAdapter.OnItemClickListener {
+            override fun onClick(type: Int, position: Int, view: View) {
+                val provider = UBB.getProvider(type) ?: return
+                val dataList = mUBBChildDataMap[type] ?: return
+                val indexList = mUBBChildIndexMap[type] ?: return
+                if (provider.getUBBTagName().equals(ImageStyle.TAG_NAME, true)) {
+                    (view as? ImageView)?.let {
+                        var indexOfData = 0
+                        for (index in 0 until indexList.size) {
+                            if (indexList[index] == position) {
+                                indexOfData = index
+                                break
+                            }
+                        }
+                        mOnImageClickListener?.onClick(dataList, indexOfData, it)
+                    }
+                }
+            }
+
+        })
     }
 
     fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
@@ -221,15 +231,34 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
         }
         lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
             mUBBContentList.clear()
-            mUBBContentMap.clear()
-            mUBBViewMap.clear()
+            mUBBChildDataMap.clear()
+            mUBBChildIndexMap.clear()
             removeAllViews()
-            mAdapter?.let { ubbContentAdapter ->
-                withContext(Dispatchers.IO) {
-                    val ubbConvert = UBBContentViewConvert(context, ubbContentAdapter)
-                    ubbConvert.parseUBB4SpannableStringBuilder(ubb)
-                    val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
-                    fillContent(ubbContentAdapter, ubbContentBeanList)
+            withContext(Dispatchers.IO) {
+                val ubbConvert = UBBContentViewConvert(context)
+                ubbConvert.parseUBB4SpannableStringBuilder(ubb)
+                val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
+                ubbContentBeanList.forEachIndexed { index, ubbContentBean ->
+                    val type = ubbContentBean.type
+                    val childDataList = mUBBChildDataMap[type] ?: let {
+                        val list = mutableListOf<String>()
+                        mUBBChildDataMap[type] = list
+                        list
+                    }
+                    val childIndexList = mUBBChildIndexMap[type] ?: let {
+                        val list = mutableListOf<Int>()
+                        mUBBChildIndexMap[type] = list
+                        list
+                    }
+                    if (UBB.getProvider(type)?.equalsTag(ImageStyle.TAG_NAME) == true) {
+                        val data: String = (ubbContentBean.style as? ImageStyle)
+                            ?.getRealPath(context) ?: ""
+                        childDataList.add(data)
+                        childIndexList.add(index)
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    mAdapter.setData(ubbContentBeanList)
                     mUBB = ubb
                 }
             }
@@ -244,59 +273,64 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
         ubbContentBeanList: List<UBBContentBean>
     ) {
         withContext(Dispatchers.IO) {
-            ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
-                val type = ubbContentBean.type
-                val contentList = mUBBContentMap[type] ?: let {
-                    val list = mutableListOf<String>()
-                    mUBBContentMap[type] = list
-                    list
-                }
-                val viewList = mUBBViewMap[type] ?: let {
-                    val list = mutableListOf<View>()
-                    mUBBViewMap[type] = list
-                    list
-                }
-                withContext(Dispatchers.Main) {
-                    if (type == UBBViewType.VIEW_TEXT.type || ubbContentBean.style == null) {
-                        DefaultViewHolder.build(context)
-                    } else {
-                        adapter.onCreateViewHolder(
-                            this@UBBContentView,
-                            ubbContentBean.style!!
-                        )
-                    }?.let { holder ->
-                        addView(holder.itemView)
-                        adapter.onBindViewHolder(
-                            this@UBBContentView,
-                            holder,
-                            position,
-                            ubbContentBean
-                        )
-                        if (holder is ImageViewHolder) {
-                            val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
-                                (ubbContentBean.style as? ImageStyle)?.getRealPath(context) ?: ""
-                            } else {
-                                ""
-                            }
-                            contentList.add(data)
-                            viewList.add(holder.imageView)
-                            holder.imageView.setOnClickListener {
-                                mOnImageClickListener?.onClick(
-                                    contentList,
-                                    contentList.indexOf(data),
-                                    holder.imageView
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+//            ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
+//                val type = ubbContentBean.type
+//                val contentList = mUBBContentMap[type] ?: let {
+//                    val list = mutableListOf<String>()
+//                    mUBBContentMap[type] = list
+//                    list
+//                }
+//                val viewList = mUBBViewMap[type] ?: let {
+//                    val list = mutableListOf<View>()
+//                    mUBBViewMap[type] = list
+//                    list
+//                }
+//                withContext(Dispatchers.Main) {
+//                    if (type == UBBViewType.VIEW_TEXT.type || ubbContentBean.style == null) {
+//                        DefaultViewHolder.build(context)
+//                    } else {
+//                        adapter.onCreateViewHolder(
+//                            this@UBBContentView,
+//                            ubbContentBean.style!!
+//                        )
+//                    }?.let { holder ->
+//                        addView(holder.itemView)
+//                        adapter.onBindViewHolder(
+//                            this@UBBContentView,
+//                            holder,
+//                            position,
+//                            ubbContentBean
+//                        )
+//                        if (holder is ImageViewHolder) {
+//                            val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
+//                                (ubbContentBean.style as? ImageStyle)?.getRealPath(context) ?: ""
+//                            } else {
+//                                ""
+//                            }
+//                            contentList.add(data)
+//                            viewList.add(holder.imageView)
+//                            holder.imageView.setOnClickListener {
+//                                mOnImageClickListener?.onClick(
+//                                    contentList,
+//                                    contentList.indexOf(data),
+//                                    holder.imageView
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 
     fun getImageChildViewByIndex(index: Int): ImageView? {
         return try {
-            mUBBViewMap[ImageStyle.Helper.getViewType()]?.get(index) as? ImageView
+            UBB.getProvider(ImageStyle.TAG_NAME)?.let { provider ->
+                val type = UBB.getViewType(provider)
+                mUBBChildIndexMap[type]?.get(index)?.let { childIndex ->
+                    (getChildViewHolder(getChildAt(childIndex)) as? ImageViewHolder)?.imageView
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -310,16 +344,13 @@ class UBBContentView : LinearLayout, DefaultLifecycleObserver {
     override fun onDestroy(owner: LifecycleOwner) {
         super.onDestroy(owner)
         mUBBContentList.clear()
-        mUBBContentMap.clear()
+        mUBBChildDataMap.clear()
         removeAllViews()
-        mAdapter = null
     }
 
     fun setOnImageClickListener(listener: OnImageClickListener) {
         mOnImageClickListener = listener
     }
-
-    abstract class ViewHolder(val itemView: View)
 
     interface OnImageClickListener {
         fun onClick(pathList: List<String>, index: Int, view: ImageView)

@@ -119,7 +119,7 @@ fun getTagNameBySpan(span: Any?): Array<String>? {
         return arrayOf("", "")
     }
     if (span is ISpan) {
-        return arrayOf("[${span.getTag()}]", "[/${span.getTag()}]")
+        return arrayOf("[${span.getTagName()}]", "[/${span.getTagName()}]")
     }
     return null
 }

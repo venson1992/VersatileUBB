@@ -1,22 +1,26 @@
 package com.venson.versatile.ubb.style
 
 import android.graphics.Paint
-import android.view.ViewGroup
-import com.venson.versatile.ubb.widget.UBBContentView
 import org.jsoup.nodes.Node
+import java.util.*
 
 /**
  * 自定义span，数据类
  */
 abstract class AbstractStyle {
 
-    //属性map
+    protected val ATTR_ALIGN = "align"
+
+    // 属性map
     private val attrMap = hashMapOf<String, String>()
 
-    //值
+    // 值
     private var text: String = ""
 
-    abstract fun getHelper(): Helper
+    /**
+     * 标签名字
+     */
+    abstract fun getTagName(): String
 
     /**
      * 存入属性键值对
@@ -50,18 +54,42 @@ abstract class AbstractStyle {
     fun getText() = text
 
     /**
+     * 解析ubb
+     */
+    open fun fromUBB(node: Node?, align: Paint.Align) {
+        putAttr(ATTR_ALIGN, align.name.toLowerCase(Locale.ROOT))
+        node?.attributes()?.forEach {
+            putAttr(it.key, it.value)
+        }
+    }
+
+    /**
      * content转ubb
      */
-    fun toUBB(): String {
+    fun toUBB(isWithAlign: Boolean): String {
         val ubb = StringBuilder()
-        ubb.append("[${getHelper().getTagName()}")
+        val align = getAttr(ATTR_ALIGN)
+        val isAlignLeft = align.equals("left", true)
+        if (isWithAlign && !isAlignLeft) {
+            ubb.append("[align=${getAttr(ATTR_ALIGN)}]")
+        }
+        ubb.append("[${getTagName()}")
         if (attrMap.isNotEmpty()) {
             attrMap.forEach { entry ->
                 ubb.append(" ${entry.key}=\"${entry.value}\"")
             }
         }
-        ubb.append("]").append(text).append("[/${getHelper().getTagName()}]")
+        ubb.append("]")
+            .append(text)
+            .append("[/${getTagName()}]")
+        if (isWithAlign && !isAlignLeft) {
+            ubb.append("[/align]")
+        }
         return ubb.toString()
+    }
+
+    fun getAlign(defaultAlign: Paint.Align): String {
+        return getAttr(ATTR_ALIGN, defaultAlign.name.toLowerCase(Locale.ROOT))
     }
 
     /**
@@ -74,36 +102,6 @@ abstract class AbstractStyle {
      */
     open fun getSpanText(): String {
         return getText()
-    }
-
-    abstract fun getViewHolder(parent: ViewGroup): UBBContentView.ViewHolder?
-
-    abstract class Helper {
-
-        /**
-         * 自定义的ubb标签
-         */
-        abstract fun getTagName(): String
-
-        /**
-         * 是否属于该标签
-         */
-        fun equalsTag(tagName: String): Boolean = getTagName().equals(tagName, true)
-
-        /**
-         * ViewHolder
-         */
-        abstract fun getViewType(): Int
-
-        /**
-         * 转换该ubb标签为html
-         */
-        abstract fun convertUBB(source: String): String
-
-        /**
-         * 解析node
-         */
-        abstract fun fromUBB(node: Node?, align: Paint.Align = Paint.Align.LEFT): AbstractStyle
     }
 
 }

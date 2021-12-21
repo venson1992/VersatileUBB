@@ -40,4 +40,8 @@ abstract class TouchableSpan(
     override fun getStyle(): AbstractStyle {
         TODO("Not yet implemented")
     }
+
+    override fun getUBB(): String {
+        TODO("Not yet implemented")
+    }
 }

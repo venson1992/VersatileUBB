@@ -2,22 +2,19 @@ package com.venson.versatile.ubb.convert
 
 import android.content.Context
 import com.venson.versatile.ubb.UBB
-import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
-import com.venson.versatile.ubb.bean.UBBViewType
+import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.span.GlideImageSpan
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UBBContentViewConvert(
-    context: Context,
-    private val ubbContentAdapter: UBBContentAdapter
-) : AbstractConvert(context) {
+class UBBContentViewConvert(context: Context) : AbstractConvert(context) {
 
     private val mMediaSpanList = mutableListOf<Any>()
     private val mMediaSpanRangeList = mutableListOf<IntRange>()
+    private val mDefaultType = UBB.getViewType(DefaultViewHolder::class.java)
 
     override fun isOnlyText(): Boolean {
         return true
@@ -33,10 +30,19 @@ class UBBContentViewConvert(
 
     override suspend fun insertSpan(content: String, span: Any) {
         super.insertSpan(content, span)
-        if (span is GlideImageSpan || ubbContentAdapter.isCustomSpan(span)) {
-            mMediaSpanList.add(span)
-            val end = getSpannableString().length
-            mMediaSpanRangeList.add(IntRange(end - content.length, end))
+        if (span is ISpan) {
+            val type = UBB.getProvider(span.getTagName())
+                ?.let { provider ->
+                    UBB.getViewType(provider)
+                }
+                ?: let {
+                    mDefaultType
+                }
+            if (span is GlideImageSpan || type != mDefaultType) {
+                mMediaSpanList.add(span)
+                val end = getSpannableString().length
+                mMediaSpanRangeList.add(IntRange(end - content.length, end))
+            }
         }
     }
 
@@ -55,11 +61,11 @@ class UBBContentViewConvert(
             /*
             纯文本
              */
-            if (mMediaSpanList.isNullOrEmpty()) {
+            if (mMediaSpanList.isEmpty()) {
                 ubbContentBeanList.add(
                     UBBContentBean().also {
                         it.text = spannableString
-                        it.type = UBBViewType.VIEW_TEXT.type
+                        it.type = mDefaultType
                     }
                 )
             }
@@ -80,7 +86,7 @@ class UBBContentViewConvert(
                         ubbContentBeanList.add(
                             UBBContentBean().also {
                                 it.text = text
-                                it.type = UBBViewType.VIEW_TEXT.type
+                                it.type = mDefaultType
                             }
                         )
                     }
@@ -100,7 +106,14 @@ class UBBContentViewConvert(
                     ubbContentBeanList.add(
                         UBBContentBean().also {
                             it.style = customStyle
-                            it.type = customStyle.getHelper().getViewType()
+                            val type = UBB.getProvider(customStyle.getTagName())
+                                ?.let { provider ->
+                                    UBB.getViewType(provider)
+                                }
+                                ?: let {
+                                    mDefaultType
+                                }
+                            it.type = type
                         }
                     )
                 }
@@ -116,7 +129,7 @@ class UBBContentViewConvert(
                     ubbContentBeanList.add(
                         UBBContentBean().also {
                             it.text = text
-                            it.type = UBBViewType.VIEW_TEXT.type
+                            it.type = mDefaultType
                         }
                     )
                 }

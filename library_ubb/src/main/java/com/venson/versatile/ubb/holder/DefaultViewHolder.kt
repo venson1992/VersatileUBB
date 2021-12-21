@@ -1,15 +1,17 @@
 package com.venson.versatile.ubb.holder
 
 import android.content.Context
+import android.util.TypedValue
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import com.venson.versatile.ubb.widget.UBBContentView
+import com.venson.versatile.ubb.adapter.UBBContentAdapter
+import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.widget.UBBTextView
 
 /**
  * 文本
  */
-class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemView) {
+class DefaultViewHolder(itemView: FrameLayout) : AbcViewHolder(itemView) {
 
     companion object {
 
@@ -35,6 +37,17 @@ class DefaultViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemV
             )
         )
         textView.setTextIsSelectable(true)
+    }
+
+    override fun bindData(
+        adapter: UBBContentAdapter,
+        ubbContentBean: UBBContentBean,
+        parentWidth: Int
+    ) {
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, adapter.getTextSize())
+        textView.setTextColor(adapter.getTextColor())
+        textView.setLineSpacing(adapter.getLineSpacingExtra(), adapter.getLineSpacingMultiplier())
+        textView.setSpannableText(ubbContentBean.text)
     }
 
 }

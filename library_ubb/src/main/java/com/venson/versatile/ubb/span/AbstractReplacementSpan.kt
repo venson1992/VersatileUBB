@@ -10,6 +10,8 @@ abstract class AbstractReplacementSpan(private val abstractStyle: AbstractStyle)
         return abstractStyle
     }
 
+    override fun getUBB(): String = getStyle().toUBB(false)
+
     /**
      * 该样式前置是否另起一行
      */

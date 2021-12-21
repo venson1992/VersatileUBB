@@ -12,17 +12,18 @@ import android.text.style.AlignmentSpan
 import android.text.style.MetricAffectingSpan
 import android.text.style.RelativeSizeSpan
 import com.venson.versatile.ubb.UBB
-import com.venson.versatile.ubb.bean.UBBViewType
 import com.venson.versatile.ubb.ext.getText
 import com.venson.versatile.ubb.ext.isEndBreakLine
 import com.venson.versatile.ubb.span.GlideImageSpan
 import com.venson.versatile.ubb.span.ISpan
 import com.venson.versatile.ubb.style.AbstractStyle
-import com.venson.versatile.ubb.style.AtSomeoneStyle
 import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.utils.convertHTML
 import com.venson.versatile.ubb.utils.getSpanByTag
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -36,23 +37,26 @@ abstract class AbstractConvert(val context: Context) {
         private const val TAG = "UBBConvert"
     }
 
+    // 解析后的body节点对象
     private var mBodyElement: Node? = null
 
+    // 解析后的文本对象
     private val mSpannableStringBuilder = SpannableStringBuilder()
 
-    private var mLastISpanIndex: Int = -1
+    // 需要换行的span 上一次的index
+    private var mBreakLineEnableLastIndex: Int = -1
 
-    //预览文本内容，不包含图片和其他排除掉的标签内容
+    // 预览文本内容，不包含图片和其他排除掉的标签内容
     private var mContent: String = ""
 
-    //图片列表
+    // 图片列表
     private var mImageCodeList: MutableList<String> = mutableListOf()
     private var mImageSrcList: MutableList<String> = mutableListOf()
 
-    //音频列表
+    // 音频列表
     private var mAudioList: MutableList<String> = mutableListOf()
 
-    //视频列表
+    // 视频列表
     private var mVideoList: MutableList<String> = mutableListOf()
 
     /**
@@ -70,11 +74,6 @@ abstract class AbstractConvert(val context: Context) {
             onParseComplete()
             return
         }
-        /*
-        自带的标签解析
-         */
-        UBB.registerStyleBuilder(AtSomeoneStyle.Helper)
-        UBB.registerStyleBuilder(ImageStyle.Helper)
         /*
         转换html
          */
@@ -129,25 +128,27 @@ abstract class AbstractConvert(val context: Context) {
         过滤媒体
          */
         val ignoredTagList = getIgnoredConvert2Text().toMutableList()
-        UBBViewType.values().forEach { mediaTagType ->
-            if (!ignoredTagList.contains(mediaTagType.tagName)) {
-                ignoredTagList.add(mediaTagType.tagName)
-            }
-        }
+        ignoredTagList.add(ImageStyle.TAG_NAME)
         ignoredTagList.forEach { ignoredTag ->
             bodyElement.getElementsByTag(ignoredTag).forEach { ignoredElement ->
                 val htmlCode = ignoredElement.toString()
                 mContent = mContent.replace(ignoredElement.text(), "")
-                if (ignoredTag == UBBViewType.VIEW_IMAGE.tagName) {
-                    mImageCodeList.add(htmlCode)
-                    mImageSrcList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
+                when (ignoredTag) {
+                    ImageStyle.TAG_NAME -> {
+                        mImageCodeList.add(htmlCode)
+                        mImageSrcList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
+                    }
                 }
-                if (ignoredTag == UBBViewType.VIEW_AUDIO.tagName) {
-                    mAudioList.add(htmlCode)
-                }
-                if (ignoredTag == UBBViewType.VIEW_VIDEO.tagName) {
-                    mVideoList.add(htmlCode)
-                }
+//                if (ignoredTag == UBBViewType.VIEW_IMAGE.tagName) {
+//                    mImageCodeList.add(htmlCode)
+//                    mImageSrcList.add(ignoredElement.attr(ImageStyle.ATTR_SRC))
+//                }
+//                if (ignoredTag == UBBViewType.VIEW_AUDIO.tagName) {
+//                    mAudioList.add(htmlCode)
+//                }
+//                if (ignoredTag == UBBViewType.VIEW_VIDEO.tagName) {
+//                    mVideoList.add(htmlCode)
+//                }
             }
         }
     }
@@ -360,7 +361,7 @@ abstract class AbstractConvert(val context: Context) {
                         }
                     }
                 } else {
-                    if (mLastISpanIndex == mSpannableStringBuilder.length) {
+                    if (mBreakLineEnableLastIndex == mSpannableStringBuilder.length) {
                         mSpannableStringBuilder.append(UBB.BREAK_LINE)
                     }
                 }
@@ -377,7 +378,7 @@ abstract class AbstractConvert(val context: Context) {
             if (span is ISpan) {
                 if (span.isEndSingleLine()) {
                     if (!mSpannableStringBuilder.isEndBreakLine()) {
-                        mLastISpanIndex = mSpannableStringBuilder.length
+                        mBreakLineEnableLastIndex = mSpannableStringBuilder.length
                     }
                 }
             }
@@ -388,8 +389,8 @@ abstract class AbstractConvert(val context: Context) {
      * 返回一些自定义标签span
      */
     private fun getStyle(tagName: String, node: Node, align: Paint.Align): AbstractStyle? {
-        UBB.getStyleBuilderMap()[tagName]?.let { builder ->
-            return builder.fromUBB(node, align)
+        UBB.getProvider(tagName)?.let { provider ->
+            return provider.parse2Style(node, align)
         }
         return null
     }
@@ -501,8 +502,8 @@ abstract class AbstractConvert(val context: Context) {
 
     private fun convertHTML(ubb: String): String {
         var dest = ubb
-        UBB.getStyleBuilderMap().forEach { entry ->
-            dest = entry.value.convertUBB(dest)
+        UBB.getProviderMap().forEach { entry ->
+            dest = entry.value.convert2UBB(dest)
         }
         return dest
     }

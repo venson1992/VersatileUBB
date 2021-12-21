@@ -1,30 +1,23 @@
 package com.venson.versatile.ubb.adapter
 
-import android.graphics.Bitmap
+import android.annotation.SuppressLint
 import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.drawable.Drawable
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.Px
-import androidx.constraintlayout.widget.ConstraintLayout
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
-import com.google.android.material.shape.CornerFamily
-import com.google.android.material.shape.ShapeAppearanceModel
-import com.venson.versatile.ubb.R
+import androidx.recyclerview.widget.RecyclerView
+import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.UBBContentBean
+import com.venson.versatile.ubb.holder.AbcViewHolder
 import com.venson.versatile.ubb.holder.DefaultViewHolder
-import com.venson.versatile.ubb.holder.ImageViewHolder
-import com.venson.versatile.ubb.style.AbstractStyle
-import com.venson.versatile.ubb.style.ImageStyle
 import com.venson.versatile.ubb.widget.UBBContentView
 
-abstract class UBBContentAdapter {
+/**
+ * 内部使用的视图绑定器
+ */
+class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     @ColorInt
     private var mTextColor: Int = Color.BLACK
@@ -51,6 +44,10 @@ abstract class UBBContentAdapter {
     private var mImagePlaceholderRes: Int = 0
 
     private var mImagePlaceholderRatio: String = "2:1"
+
+    private var mRecyclerView: RecyclerView? = null
+
+    private var mOnItemClickListener: OnItemClickListener? = null
 
     internal fun initParams(
         textColor: Int,
@@ -100,157 +97,55 @@ abstract class UBBContentAdapter {
 
     fun getImagePlaceholderRatio(): String = mImagePlaceholderRatio
 
-    fun onCreateViewHolder(
-        parent: ViewGroup,
-        customStyle: AbstractStyle
-    ): UBBContentView.ViewHolder? {
-        val customViewHolder = onCreateCustomViewHolder(parent, customStyle)
-        if (customViewHolder != null) {
-            return customViewHolder
-        }
-        return customStyle.getViewHolder(parent)
+    private var mContentData: List<UBBContentBean>? = null
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun setData(data: List<UBBContentBean>?) {
+        mContentData = data
+        notifyDataSetChanged()
     }
 
-    abstract fun isCustomSpan(span: Any): Boolean
-
-    abstract fun onCreateCustomViewHolder(
-        parent: ViewGroup,
-        customStyle: AbstractStyle
-    ): UBBContentView.ViewHolder?
-
-    fun onBindViewHolder(
-        parent: ViewGroup,
-        holder: UBBContentView.ViewHolder,
-        position: Int,
-        ubbContentBean: UBBContentBean
-    ) {
-        /*
-        设置间隔
-         */
-        val topMargin = if (position == 0) {
-            0
-        } else {
-            getVerticalSpacing()
-        }
-        holder.itemView.layoutParams?.let { layoutParams ->
-            layoutParams as ViewGroup.MarginLayoutParams
-            layoutParams.topMargin = topMargin
-            holder.itemView.layoutParams = layoutParams
-        }
-        /*
-        其他
-         */
-        if (holder is DefaultViewHolder) {
-            holder.textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, getTextSize())
-            holder.textView.setTextColor(getTextColor())
-            holder.textView.setLineSpacing(getLineSpacingExtra(), getLineSpacingMultiplier())
-            holder.textView.setSpannableText(ubbContentBean.text)
-            return
-        }
-        if (holder is ImageViewHolder) {
-            holder.itemView.visibility = View.GONE
-            val style = ubbContentBean.style ?: return
-            val url = style.getAttr()[ImageStyle.ATTR_SRC] ?: return
-            holder.itemView.visibility = View.VISIBLE
-            val itemWidth = parent.measuredWidth
-            //自动宽度
-            val imageWidth: Int = if (getImageWidth() <= 0) {
-                if (getImageWidth() == UBBContentView.IMAGE_WIDTH_WRAP) {
-                    UBBContentView.IMAGE_WIDTH_WRAP
-                } else {
-                    UBBContentView.IMAGE_WIDTH_MATCH
-                }
-            } else {
-                getImageWidth()
-            }
-            holder.imageView.layoutParams?.let { layoutParams ->
-                layoutParams as ConstraintLayout.LayoutParams
-                when (style.getAttr(ImageStyle.ATTR_ALIGN, Paint.Align.CENTER.name)) {
-                    Paint.Align.CENTER.name -> {
-                        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-                    }
-                    Paint.Align.LEFT.name -> {
-                        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET
-                    }
-                    else -> {
-                        layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET
-                        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-                    }
-                }
-                holder.imageView.layoutParams = layoutParams
-            }
-            holder.imageView.setTag(R.id.id_ubb_image, url)
-            holder.imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
-                .setAllCorners(CornerFamily.ROUNDED, getImageCorners())
-                .build()
-            loadPlaceholder(holder, imageWidth)
-            val imageTarget = object : CustomTarget<Bitmap>() {
-                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                    val tag = holder.imageView.getTag(R.id.id_ubb_image) as? String
-                    if (tag?.equals(url) != true) {
-                        return
-                    }
-                    val resourceWidth = resource.width
-                    val resourceHeight = resource.height
-                    val displayWidth: Int = if (imageWidth == UBBContentView.IMAGE_WIDTH_MATCH) {
-                        itemWidth
-                    } else if (imageWidth == UBBContentView.IMAGE_WIDTH_WRAP) {
-                        if (resourceWidth >= itemWidth) {
-                            itemWidth
-                        } else {
-                            resourceWidth
-                        }
-                    } else {
-                        imageWidth
-                    }
-                    val displayHeight: Int = displayWidth.times(resourceHeight).div(resourceWidth)
-                    holder.imageView.layoutParams?.let { layoutParams ->
-                        if (layoutParams is ConstraintLayout.LayoutParams) {
-                            layoutParams.width = displayWidth
-                            layoutParams.height = displayHeight
-                            holder.imageView.layoutParams = layoutParams
-                        }
-                    }
-                    Glide.with(holder.imageView).asDrawable().load(url).into(holder.imageView)
-                }
-
-                override fun onLoadCleared(placeholder: Drawable?) {
-//                    loadPlaceholder(holder, imageWidth)
-                }
-
-            }
-            Glide.with(holder.imageView).asBitmap().load(url).into(imageTarget)
-        }
-        onBindCustomViewHolder(holder, position, ubbContentBean)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AbcViewHolder {
+        return UBB.getProvider(viewType)?.createViewHolder(parent.context)
+            ?: DefaultViewHolder.build(parent.context)
     }
 
-    abstract fun onBindCustomViewHolder(
-        holder: UBBContentView.ViewHolder,
-        position: Int,
-        ubbContentBean: UBBContentBean
-    )
-
-    abstract fun getTypeByStyle(customStyle: AbstractStyle): Int
-
-    private fun loadPlaceholder(holder: ImageViewHolder, imageWidth: Int) {
-        holder.imageView.setImageBitmap(null)
-        holder.imageView.layoutParams?.let { layoutParams ->
-            if (layoutParams is ConstraintLayout.LayoutParams) {
-                layoutParams.width = ConstraintLayout.LayoutParams.MATCH_PARENT
-                layoutParams.dimensionRatio = getImagePlaceholderRatio()
-                holder.imageView.layoutParams = layoutParams
+    override fun onBindViewHolder(holder: AbcViewHolder, position: Int) {
+        val ubbContentBean = mContentData?.get(position) ?: return
+        holder.bindData(this, ubbContentBean, mRecyclerView?.measuredWidth ?: 0)
+        holder.updateMargin(holder.adapterPosition, getVerticalSpacing())
+        holder.setOnClickListener(object : OnItemClickListener {
+            override fun onClick(type: Int, position: Int, view: View) {
+                mOnItemClickListener?.onClick(type, position, view)
             }
-        }
-        val placeholder = if (getImagePlaceholderRes() == 0) {
-            R.drawable.default_drawable
-        } else {
-            getImagePlaceholderRes()
-        }
-        Glide.with(holder.imageView)
-            .load(placeholder)
-            .into(holder.imageView)
+
+        })
     }
 
+    override fun getItemViewType(position: Int): Int {
+        val contentBean = mContentData?.get(position) ?: return 0
+        return contentBean.type
+    }
+
+    override fun getItemCount(): Int {
+        return mContentData?.size ?: 0
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        mRecyclerView = recyclerView
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        mRecyclerView = null
+    }
+
+    fun setOnItemClickListener(listener: OnItemClickListener) {
+        mOnItemClickListener = listener
+    }
+
+    interface OnItemClickListener {
+        fun onClick(type: Int, position: Int, view: View)
+    }
 }

@@ -119,6 +119,10 @@ class GlideImageSpan : DynamicImageSpan, ISpan {
         return mImageStyle
     }
 
+    override fun getUBB(): String {
+        return getStyle().toUBB(true)
+    }
+
     /**
      * 该样式前置是否另起一行
      */

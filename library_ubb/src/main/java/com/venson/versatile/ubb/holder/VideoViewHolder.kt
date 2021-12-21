@@ -5,12 +5,13 @@ import android.view.Gravity
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import com.venson.versatile.ubb.widget.UBBContentView
+import com.venson.versatile.ubb.adapter.UBBContentAdapter
+import com.venson.versatile.ubb.bean.UBBContentBean
 
 /**
  * 视频
  */
-class VideoViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemView) {
+class VideoViewHolder(itemView: FrameLayout) : AbcViewHolder(itemView) {
 
     val webView: WebView = WebView(itemView.context)
 
@@ -37,5 +38,13 @@ class VideoViewHolder(itemView: FrameLayout) : UBBContentView.ViewHolder(itemVie
             )
             return VideoViewHolder(itemView)
         }
+    }
+
+    override fun bindData(
+        adapter: UBBContentAdapter,
+        ubbContentBean: UBBContentBean,
+        parentWidth: Int
+    ) {
+        TODO("Not yet implemented")
     }
 }

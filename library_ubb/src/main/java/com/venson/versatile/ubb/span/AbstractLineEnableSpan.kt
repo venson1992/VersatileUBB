@@ -30,6 +30,8 @@ abstract class AbstractLineEnableSpan(
         return abstractStyle
     }
 
+    override fun getUBB(): String = getStyle().toUBB(false)
+
     override fun drawBackground(
         canvas: Canvas,
         paint: Paint,

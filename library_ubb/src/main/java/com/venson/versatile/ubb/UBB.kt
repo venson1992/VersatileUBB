@@ -5,9 +5,10 @@ import android.content.Context
 import android.graphics.Color
 import android.util.Log
 import androidx.annotation.ColorInt
-import com.venson.versatile.ubb.adapter.UBBContentAdapter
-import com.venson.versatile.ubb.adapter.UBBSimpleContentAdapter
-import com.venson.versatile.ubb.style.AbstractStyle
+import com.venson.versatile.ubb.holder.AbcViewHolder
+import com.venson.versatile.ubb.provider.AbcProvider
+import com.venson.versatile.ubb.provider.AtSomeoneProvider
+import com.venson.versatile.ubb.provider.ImageProvider
 
 /**
  * 一些配置项
@@ -31,13 +32,20 @@ object UBB {
 
     private var LOG = true
 
-    private val mStyleBuilderMap = mutableMapOf<String, AbstractStyle.Helper>()
-
     private var applicationContext: Context? = null
 
     private var imageEngine: ImageEngine? = null
 
-    private var contentAdapter: UBBContentAdapter = UBBSimpleContentAdapter()
+    private val mProviderMapGroupByType: MutableMap<Int, AbcProvider<out AbcViewHolder>> by lazy {
+        mutableMapOf()
+    }
+    private val mProviderMapGroupByTagName: MutableMap<String, AbcProvider<out AbcViewHolder>> by lazy {
+        mutableMapOf<String, AbcProvider<out AbcViewHolder>>().also {
+            mProviderMapGroupByType.clear()
+            addProvider(it, ImageProvider())
+            addProvider(it, AtSomeoneProvider())
+        }
+    }
 
     /**
      * 设置可点击的文本大小
@@ -79,14 +87,6 @@ object UBB {
         }
     }
 
-    fun registerStyleBuilder(helper: AbstractStyle.Helper) {
-        mStyleBuilderMap[helper.getTagName()] = helper
-    }
-
-    fun getStyleBuilderMap(): Map<String, AbstractStyle.Helper> {
-        return mStyleBuilderMap
-    }
-
     fun init(context: Context) {
         applicationContext = context.applicationContext
     }
@@ -99,11 +99,27 @@ object UBB {
 
     fun getImageEngine(): ImageEngine? = imageEngine
 
-    fun setContentAdapter(contentAdapter: UBBContentAdapter) {
-        this.contentAdapter = contentAdapter
+    fun addProvider(
+        map: MutableMap<String, AbcProvider<out AbcViewHolder>>,
+        provider: AbcProvider<out AbcViewHolder>
+    ) {
+        map[provider.getUBBTagName()] = provider
+        mProviderMapGroupByType[getViewType(provider)] = provider
     }
 
-    fun getContentAdapter(): UBBContentAdapter {
-        return contentAdapter
+    fun getProviderMap(): MutableMap<String, AbcProvider<out AbcViewHolder>> =
+        mProviderMapGroupByTagName
+
+    fun getProvider(tagName: String): AbcProvider<out AbcViewHolder>? =
+        mProviderMapGroupByTagName[tagName]
+
+    fun getProvider(type: Int): AbcProvider<out AbcViewHolder>? = mProviderMapGroupByType[type]
+
+    fun getViewType(clazz: Class<out AbcViewHolder>): Int {
+        return clazz.toString().hashCode()
+    }
+
+    fun getViewType(provider: AbcProvider<out AbcViewHolder>): Int {
+        return provider.type.toString().hashCode()
     }
 }

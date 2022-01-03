@@ -1,49 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.venson.versatile.ubb.widget.UBBContentView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/scrollView"
+    android:id="@+id/contentView"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".DetailByContentActivity">
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <TextView
-            android:id="@+id/titleView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="15dp"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <com.venson.versatile.ubb.widget.UBBContentView
-            android:id="@+id/contentView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="15dp"
-            android:layout_marginTop="10dp"
-            android:lineSpacingExtra="10dp"
-            android:lineSpacingMultiplier="1"
-            android:textColor="@color/black"
-            android:textSize="14sp"
-            android:verticalSpacing="10dp"
-            app:imageCorners="15dp"
-            app:imageWidth="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/titleView" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_marginTop="20dp"
-            android:background="@android:color/holo_green_light"
-            app:layout_constraintTop_toBottomOf="@id/contentView" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.core.widget.NestedScrollView>
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="15dp"
+    android:layout_marginTop="10dp"
+    android:lineSpacingExtra="10dp"
+    android:lineSpacingMultiplier="1"
+    android:textColor="@color/black"
+    android:textSize="14sp"
+    android:verticalSpacing="10dp"
+    app:imageCorners="15dp"
+    app:imageWidth="wrap_content"
+    app:layout_constraintTop_toBottomOf="@id/titleView"
+    tools:context=".DetailByContentActivity" />

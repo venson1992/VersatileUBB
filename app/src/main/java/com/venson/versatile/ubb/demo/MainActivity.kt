@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
                 when (mMode) {
                     1 -> {
                         DetailByContentActivity.startActivity(this@MainActivity, dataBean)
+//                        DetailByContent2Activity.startActivity(this@MainActivity, dataBean)
                     }
                     2 -> {
                         DetailByTextActivity.startActivity(this@MainActivity, dataBean)

@@ -3,6 +3,7 @@ package com.venson.versatile.ubb.holder
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Paint
+import android.graphics.Point
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.widget.ImageView
@@ -80,8 +81,14 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
             imageView.layoutParams = layoutParams
         }
         imageView.setTag(R.id.id_ubb_image, url)
-        loadPlaceholder(adapter, adapter.getImageCorners())
-        val imageTarget = LoadImageTarget(url, imageWidth, parentWidth, adapter.getImageCorners())
+        loadPlaceholder(adapter, adapter.getImageCorners(), url)
+        val imageTarget = LoadImageTarget(
+            url,
+            imageWidth,
+            parentWidth,
+            adapter.getImageCorners(),
+            adapter
+        )
         Glide.with(imageView).asBitmap().load(url).into(imageTarget)
         imageView.setOnClickListener {
             mOnItemClickListener?.onClick(ubbContentBean.type, adapterPosition, it)
@@ -91,12 +98,20 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
     /**
      * 加载缺省图
      */
-    private fun loadPlaceholder(adapter: UBBContentAdapter, imageCorners: Float) {
+    private fun loadPlaceholder(adapter: UBBContentAdapter, imageCorners: Float, url: String) {
         imageView.setImageBitmap(null)
         imageView.layoutParams?.let { layoutParams ->
             if (layoutParams is ConstraintLayout.LayoutParams) {
-                layoutParams.width = ConstraintLayout.LayoutParams.MATCH_PARENT
-                layoutParams.dimensionRatio = adapter.getImagePlaceholderRatio()
+                val point = adapter.getSize(url)
+                if (point != null) {
+                    layoutParams.width = point.x
+                    layoutParams.height = point.y
+                    layoutParams.dimensionRatio = null
+                } else {
+                    layoutParams.width = ConstraintLayout.LayoutParams.MATCH_PARENT
+                    layoutParams.height = 0
+                    layoutParams.dimensionRatio = adapter.getImagePlaceholderRatio()
+                }
                 imageView.layoutParams = layoutParams
             }
         }
@@ -120,7 +135,8 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
         private val url: String,
         private val imageWidth: Int,
         private var itemWidth: Int,
-        private val imageCorners: Float
+        private val imageCorners: Float,
+        private val adapter: UBBContentAdapter
     ) : CustomTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             val tag = imageView.getTag(R.id.id_ubb_image) as? String
@@ -144,6 +160,8 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
                 imageWidth
             }
             val displayHeight: Int = displayWidth.times(resourceHeight).div(resourceWidth)
+            val point = Point(displayWidth, displayHeight)
+            adapter.putSize(url, point)
             imageView.layoutParams?.let { layoutParams ->
                 if (layoutParams is ConstraintLayout.LayoutParams) {
                     layoutParams.width = displayWidth

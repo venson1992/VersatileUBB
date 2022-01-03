@@ -2,6 +2,7 @@ package com.venson.versatile.ubb.adapter
 
 import android.annotation.SuppressLint
 import android.graphics.Color
+import android.graphics.Point
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
@@ -48,6 +49,8 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     private var mRecyclerView: RecyclerView? = null
 
     private var mOnItemClickListener: OnItemClickListener? = null
+
+    private val mDataSizeMap: MutableMap<String, Point> = mutableMapOf()
 
     internal fun initParams(
         textColor: Int,
@@ -102,6 +105,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     @SuppressLint("NotifyDataSetChanged")
     fun setData(data: List<UBBContentBean>?) {
         mContentData = data
+        mDataSizeMap.clear()
         notifyDataSetChanged()
     }
 
@@ -120,6 +124,14 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
             }
 
         })
+    }
+
+    fun putSize(data: String, point: Point) {
+        mDataSizeMap[data] = point
+    }
+
+    fun getSize(data: String): Point? {
+        return mDataSizeMap[data]
     }
 
     override fun getItemViewType(position: Int): Int {

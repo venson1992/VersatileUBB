@@ -22,7 +22,7 @@ buildscript {
         androidx_constraintlayout = 'androidx.constraintlayout:constraintlayout:2.1.0'
         androidx_legacy_support_v4 = 'androidx.legacy:legacy-support-v4:1.0.0'
         androidx_annotaion = 'androidx.annotation:annotation:1.1.0'
-        androidx_recyclerview = 'androidx.recyclerview:recyclerview:1.1.0'
+        androidx_recyclerview = 'androidx.recyclerview:recyclerview:1.2.1'
     }
     repositories {
         maven { url 'https://maven.aliyun.com/repository/google' }

@@ -3,11 +3,17 @@ package com.venson.versatile.ubb.demo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
 import com.lxj.xpopup.XPopup
 import com.lxj.xpopup.util.SmartGlideImageLoader
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailBinding
+import com.venson.versatile.ubb.demo.databinding.ActivityDetailFooterBinding
+import com.venson.versatile.ubb.demo.databinding.ActivityDetailHeaderBinding
 import com.venson.versatile.ubb.widget.UBBContentView
 
 class DetailByContentActivity : AppCompatActivity() {
@@ -31,7 +37,8 @@ class DetailByContentActivity : AppCompatActivity() {
         setContentView(mBinding.root)
         supportActionBar?.title = UBBContentView::class.java.simpleName
         val dataBean = intent?.getParcelableExtra<DataBean>("data")
-        mBinding.titleView.text = dataBean?.title ?: ""
+        mBinding.contentView.addHeader(HeaderAdapter(dataBean))
+        mBinding.contentView.addFooter(FooterAdapter())
         mBinding.contentView.setUBB(this, dataBean?.content)
         mBinding.contentView.setOnImageClickListener(object : UBBContentView.OnImageClickListener {
             override fun onClick(pathList: List<String>, index: Int, view: ImageView) {
@@ -41,14 +48,18 @@ class DetailByContentActivity : AppCompatActivity() {
                         index,
                         pathList,
                         { popupView, position ->
-                            mBinding.contentView.getImageChildViewByIndex(position)
-                                ?.let { targetView ->
-                                    mBinding.scrollView.scrollTo(
-                                        0,
-                                        mBinding.contentView.getImageChildViewTopByIndex(position)
-                                    )
-                                    popupView.updateSrcView(targetView)
+                            mBinding.contentView.scrollToIndex(
+                                position,
+                                object : UBBContentView.OnImageScrollDisplayListener {
+                                    override fun onScrollDisplay(
+                                        itemView: View,
+                                        imageView: ImageView
+                                    ) {
+                                        popupView.updateSrcView(imageView)
+                                    }
+
                                 }
+                            )
                         },
                         SmartGlideImageLoader()
                     )
@@ -56,5 +67,49 @@ class DetailByContentActivity : AppCompatActivity() {
             }
 
         })
+    }
+
+    class HeaderAdapter(private val dataBean: DataBean?) :
+        RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val headerBinding = ActivityDetailHeaderBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            return object : RecyclerView.ViewHolder(headerBinding.root) {
+
+            }
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            val headerBinding = ActivityDetailHeaderBinding.bind(holder.itemView)
+            headerBinding.titleView.text = dataBean?.title ?: ""
+        }
+
+        override fun getItemCount(): Int = 1
+
+    }
+
+    class FooterAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            val footerBinding = ActivityDetailFooterBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            return object : RecyclerView.ViewHolder(footerBinding.root) {
+
+            }
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+
+        }
+
+        override fun getItemCount(): Int = 1
+
     }
 }

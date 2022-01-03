@@ -77,6 +77,8 @@ dependencies {
     implementation rootProject.ext.androidx_lifecycle_common_ktx
     implementation rootProject.ext.androidx_constraintlayout
 
+    implementation rootProject.ext.androidx_recyclerview
+
     testImplementation 'junit:junit:4.13.2'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

@@ -12,6 +12,7 @@ import androidx.annotation.Px
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.venson.versatile.ubb.R
@@ -86,6 +87,9 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     private val mUBBChildIndexMap = mutableMapOf<Int, MutableList<Int>>()
 
     private var mOnImageClickListener: OnImageClickListener? = null
+
+    private val mHeaderAdapterList: MutableList<Adapter<ViewHolder>> = mutableListOf()
+    private val mFooterAdapterList: MutableList<Adapter<ViewHolder>> = mutableListOf()
 
     init {
         layoutManager = LinearLayoutManager(context, VERTICAL, false)
@@ -199,6 +203,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             mImagePlaceholderRes,
             mImagePlaceholderRatio
         )
+        updateAdapter()
         mAdapter.setOnItemClickListener(object : UBBContentAdapter.OnItemClickListener {
             override fun onClick(type: Int, position: Int, view: View) {
                 val provider = UBB.getProvider(type) ?: return
@@ -265,80 +270,38 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         }
     }
 
-    /**
-     * 填充视图
-     */
-    private suspend fun fillContent(
-        adapter: UBBContentAdapter,
-        ubbContentBeanList: List<UBBContentBean>
-    ) {
-        withContext(Dispatchers.IO) {
-//            ubbContentBeanList.forEachIndexed { position, ubbContentBean ->
-//                val type = ubbContentBean.type
-//                val contentList = mUBBContentMap[type] ?: let {
-//                    val list = mutableListOf<String>()
-//                    mUBBContentMap[type] = list
-//                    list
-//                }
-//                val viewList = mUBBViewMap[type] ?: let {
-//                    val list = mutableListOf<View>()
-//                    mUBBViewMap[type] = list
-//                    list
-//                }
-//                withContext(Dispatchers.Main) {
-//                    if (type == UBBViewType.VIEW_TEXT.type || ubbContentBean.style == null) {
-//                        DefaultViewHolder.build(context)
-//                    } else {
-//                        adapter.onCreateViewHolder(
-//                            this@UBBContentView,
-//                            ubbContentBean.style!!
-//                        )
-//                    }?.let { holder ->
-//                        addView(holder.itemView)
-//                        adapter.onBindViewHolder(
-//                            this@UBBContentView,
-//                            holder,
-//                            position,
-//                            ubbContentBean
-//                        )
-//                        if (holder is ImageViewHolder) {
-//                            val data: String = if (type == UBBViewType.VIEW_IMAGE.type) {
-//                                (ubbContentBean.style as? ImageStyle)?.getRealPath(context) ?: ""
-//                            } else {
-//                                ""
-//                            }
-//                            contentList.add(data)
-//                            viewList.add(holder.imageView)
-//                            holder.imageView.setOnClickListener {
-//                                mOnImageClickListener?.onClick(
-//                                    contentList,
-//                                    contentList.indexOf(data),
-//                                    holder.imageView
-//                                )
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-        }
-    }
-
-    fun getImageChildViewByIndex(index: Int): ImageView? {
-        return try {
-            UBB.getProvider(ImageStyle.TAG_NAME)?.let { provider ->
-                val type = UBB.getViewType(provider)
-                mUBBChildIndexMap[type]?.get(index)?.let { childIndex ->
-                    (getChildViewHolder(getChildAt(childIndex)) as? ImageViewHolder)?.imageView
-                }
-            }
+    fun scrollToIndex(index: Int, listener: OnImageScrollDisplayListener) {
+        val layoutManager = layoutManager as? LinearLayoutManager ?: return
+        try {
+            val childIndex = getChildIndex(ImageStyle.TAG_NAME, index)
+            layoutManager.scrollToPositionWithOffset(childIndex, 0)
+            postDelayed(
+                {
+                    val firstPosition = layoutManager.findFirstVisibleItemPosition()
+                    val childView = layoutManager.getChildAt(childIndex - firstPosition)
+                    (childView?.let { getChildViewHolder(it) } as? ImageViewHolder)?.let { holder ->
+                        listener.onScrollDisplay(holder.itemView, holder.imageView)
+                    }
+                },
+                100L
+            )
         } catch (e: Exception) {
             e.printStackTrace()
-            null
         }
     }
 
-    fun getImageChildViewTopByIndex(index: Int): Int {
-        return (getImageChildViewByIndex(index)?.parent as? View)?.top ?: 0
+    private fun getChildIndex(tagName: String, index: Int): Int {
+        UBB.getProvider(tagName)?.let { provider ->
+            val type = UBB.getViewType(provider)
+            mUBBChildIndexMap[type]?.get(index)?.let { childIndex ->
+                var headerCount = 0
+                mHeaderAdapterList.forEach { headerAdapter ->
+                    headerCount += headerAdapter.itemCount
+                }
+                return headerCount + childIndex
+            }
+        }
+        return 0
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
@@ -352,7 +315,91 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         mOnImageClickListener = listener
     }
 
+    /**
+     * 添加Header
+     */
+    fun addHeader(adapter: Adapter<ViewHolder>) {
+        if (mHeaderAdapterList.contains(adapter)) {
+            return
+        }
+        mHeaderAdapterList.add(adapter)
+        updateAdapter()
+    }
+
+    /**
+     * 移除Header
+     */
+    fun removeHeader(adapter: Adapter<ViewHolder>) {
+        if (mHeaderAdapterList.contains(adapter)) {
+            mHeaderAdapterList.remove(adapter)
+        }
+        updateAdapter()
+    }
+
+    /**
+     * 清空Header
+     */
+    fun clearHeader() {
+        if (mHeaderAdapterList.isEmpty()) {
+            return
+        }
+        mHeaderAdapterList.clear()
+        updateAdapter()
+    }
+
+    /**
+     * 添加Footer
+     */
+    fun addFooter(adapter: Adapter<ViewHolder>) {
+        if (mFooterAdapterList.contains(adapter)) {
+            return
+        }
+        mFooterAdapterList.add(adapter)
+        updateAdapter()
+    }
+
+    /**
+     * 移除Footer
+     */
+    fun removeFooter(adapter: Adapter<ViewHolder>) {
+        if (mFooterAdapterList.contains(adapter)) {
+            mFooterAdapterList.remove(adapter)
+        }
+        updateAdapter()
+    }
+
+    /**
+     * 清空Footer
+     */
+    fun clearFooter() {
+        if (mFooterAdapterList.isEmpty()) {
+            return
+        }
+        mFooterAdapterList.clear()
+        updateAdapter()
+    }
+
+    /**
+     * 组合adapter
+     */
+    private fun updateAdapter() {
+        val adapterList = mutableListOf<Adapter<out ViewHolder>>()
+        mHeaderAdapterList.forEach {
+            adapterList.add(it)
+        }
+        adapterList.add(mAdapter)
+        mFooterAdapterList.forEach {
+            adapterList.add(it)
+        }
+        val concatAdapter = ConcatAdapter(adapterList)
+        adapter = concatAdapter
+    }
+
     interface OnImageClickListener {
         fun onClick(pathList: List<String>, index: Int, view: ImageView)
+    }
+
+    interface OnImageScrollDisplayListener {
+        fun onScrollDisplay(itemView: View, imageView: ImageView)
     }
 }

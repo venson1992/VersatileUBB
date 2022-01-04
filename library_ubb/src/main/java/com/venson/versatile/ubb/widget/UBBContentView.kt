@@ -362,6 +362,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         if (mHeaderAdapterList.contains(adapter)) {
             return
         }
+        adapter.updateSpacing(mHeadSpacing, 0)
         mHeaderAdapterList.add(adapter)
         updateAdapter()
     }
@@ -394,6 +395,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         if (mFooterAdapterList.contains(adapter)) {
             return
         }
+        adapter.updateSpacing(0, mFootSpacing)
         mFooterAdapterList.add(adapter)
         updateAdapter()
     }

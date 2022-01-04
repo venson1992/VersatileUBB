@@ -3,14 +3,12 @@ package com.venson.versatile.ubb.demo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.RecyclerView
 import com.lxj.xpopup.XPopup
 import com.lxj.xpopup.util.SmartGlideImageLoader
+import com.venson.versatile.ubb.adapter.HeadOrFootAdapter
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailBinding
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailFooterBinding
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailHeaderBinding
@@ -37,8 +35,8 @@ class DetailByContentActivity : AppCompatActivity() {
         setContentView(mBinding.root)
         supportActionBar?.title = UBBContentView::class.java.simpleName
         val dataBean = intent?.getParcelableExtra<DataBean>("data")
-        mBinding.contentView.addHeader(HeaderAdapter(dataBean))
-        mBinding.contentView.addFooter(FooterAdapter())
+        mBinding.contentView.addHeader(HeadAdapter(dataBean))
+        mBinding.contentView.addFooter(FootAdapter())
         mBinding.contentView.setUBB(this, dataBean?.content)
         mBinding.contentView.setOnImageClickListener(object : UBBContentView.OnImageClickListener {
             override fun onClick(pathList: List<String>, index: Int, view: ImageView) {
@@ -69,47 +67,26 @@ class DetailByContentActivity : AppCompatActivity() {
         })
     }
 
-    class HeaderAdapter(private val dataBean: DataBean?) :
-        RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    class HeadAdapter(private val dataBean: DataBean?) :
+        HeadOrFootAdapter<ActivityDetailHeaderBinding>() {
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val headerBinding = ActivityDetailHeaderBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-            return object : RecyclerView.ViewHolder(headerBinding.root) {
+        override fun onInflateBinding(binding: ActivityDetailHeaderBinding) {
 
-            }
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            val headerBinding = ActivityDetailHeaderBinding.bind(holder.itemView)
-            headerBinding.titleView.text = dataBean?.title ?: ""
+        override fun onBindBinding(binding: ActivityDetailHeaderBinding) {
+            binding.titleView.text = dataBean?.title ?: ""
         }
-
-        override fun getItemCount(): Int = 1
-
     }
 
-    class FooterAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val footerBinding = ActivityDetailFooterBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
-            )
-            return object : RecyclerView.ViewHolder(footerBinding.root) {
-
-            }
-        }
-
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+    class FootAdapter : HeadOrFootAdapter<ActivityDetailFooterBinding>() {
+        override fun onInflateBinding(binding: ActivityDetailFooterBinding) {
 
         }
 
-        override fun getItemCount(): Int = 1
+        override fun onBindBinding(binding: ActivityDetailFooterBinding) {
+
+        }
 
     }
 }

@@ -36,6 +36,9 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     private var mVerticalSpacing: Int = 0
 
     @Px
+    private var mHorizontalSpacing: Int = 0
+
+    @Px
     private var mImageCorners: Float = 0F
 
     @Px
@@ -58,6 +61,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         lineSpacingExtra: Float,
         lineSpacingMultiplier: Float,
         verticalSpacing: Int,
+        horizontalSpacing: Int,
         imageCorners: Float,
         imageWidth: Int,
         imagePlaceholderRes: Int,
@@ -68,6 +72,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         mLineSpacingExtra = lineSpacingExtra
         mLineSpacingMultiplier = lineSpacingMultiplier
         mVerticalSpacing = verticalSpacing
+        mHorizontalSpacing = horizontalSpacing
         mImageCorners = imageCorners
         mImageWidth = imageWidth
         mImagePlaceholderRes = imagePlaceholderRes
@@ -88,6 +93,9 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     @Px
     fun getVerticalSpacing(): Int = mVerticalSpacing
+
+    @Px
+    fun getHorizontalSpacing(): Int = mHorizontalSpacing
 
     @Px
     fun getImageCorners(): Float = mImageCorners
@@ -116,8 +124,15 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     override fun onBindViewHolder(holder: AbcViewHolder, position: Int) {
         val ubbContentBean = mContentData?.get(position) ?: return
-        holder.bindData(this, ubbContentBean, mRecyclerView?.measuredWidth ?: 0)
-        holder.updateMargin(holder.adapterPosition, getVerticalSpacing())
+        val parentWidth = mRecyclerView?.measuredWidth?.let {
+            it - getHorizontalSpacing() - getHorizontalSpacing()
+        } ?: 0
+        holder.bindData(this, ubbContentBean, parentWidth)
+        holder.updateMargin(
+            holder.bindingAdapterPosition,
+            getVerticalSpacing(),
+            getHorizontalSpacing()
+        )
         holder.setOnClickListener(object : OnItemClickListener {
             override fun onClick(type: Int, position: Int, view: View) {
                 mOnItemClickListener?.onClick(type, position, view)

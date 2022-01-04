@@ -15,8 +15,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
+import com.venson.versatile.ubb.adapter.HeadOrFootAdapter
 import com.venson.versatile.ubb.adapter.UBBContentAdapter
 import com.venson.versatile.ubb.bean.UBBContentBean
 import com.venson.versatile.ubb.convert.UBBContentViewConvert
@@ -68,6 +70,15 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     private var mVerticalSpacing: Int = 0
 
     @Px
+    private var mHorizontalSpacing: Int = 0
+
+    @Px
+    private var mHeadSpacing: Int = 0
+
+    @Px
+    private var mFootSpacing: Int = 0
+
+    @Px
     private var mImageCorners: Float = 0F
 
     @Px
@@ -88,8 +99,10 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
 
     private var mOnImageClickListener: OnImageClickListener? = null
 
-    private val mHeaderAdapterList: MutableList<Adapter<ViewHolder>> = mutableListOf()
-    private val mFooterAdapterList: MutableList<Adapter<ViewHolder>> = mutableListOf()
+    private val mHeaderAdapterList: MutableList<HeadOrFootAdapter<out ViewBinding>> =
+        mutableListOf()
+    private val mFooterAdapterList: MutableList<HeadOrFootAdapter<out ViewBinding>> =
+        mutableListOf()
 
     init {
         layoutManager = LinearLayoutManager(context, VERTICAL, false)
@@ -142,6 +155,30 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         if (array.hasValue(R.styleable.UBBContentView_android_verticalSpacing)) {
             mVerticalSpacing = array.getDimensionPixelSize(
                 R.styleable.UBBContentView_android_verticalSpacing, mVerticalSpacing
+            )
+        }
+        /*
+        内容横向间距
+         */
+        if (array.hasValue(R.styleable.UBBContentView_android_horizontalSpacing)) {
+            mHorizontalSpacing = array.getDimensionPixelSize(
+                R.styleable.UBBContentView_android_horizontalSpacing, mHorizontalSpacing
+            )
+        }
+        /*
+        内容与head的距离
+         */
+        if (array.hasValue(R.styleable.UBBContentView_headSpacing)) {
+            mHeadSpacing = array.getDimensionPixelSize(
+                R.styleable.UBBContentView_headSpacing, mHeadSpacing
+            )
+        }
+        /*
+        内容与food的距离
+         */
+        if (array.hasValue(R.styleable.UBBContentView_footSpacing)) {
+            mFootSpacing = array.getDimensionPixelSize(
+                R.styleable.UBBContentView_footSpacing, mFootSpacing
             )
         }
         /*
@@ -198,32 +235,35 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             mLineSpacingExtra,
             mLineSpacingMultiplier,
             mVerticalSpacing,
+            mHorizontalSpacing,
             mImageCorners,
             mImageWidth,
             mImagePlaceholderRes,
             mImagePlaceholderRatio
         )
         updateAdapter()
-        mAdapter.setOnItemClickListener(object : UBBContentAdapter.OnItemClickListener {
-            override fun onClick(type: Int, position: Int, view: View) {
-                val provider = UBB.getProvider(type) ?: return
-                val dataList = mUBBChildDataMap[type] ?: return
-                val indexList = mUBBChildIndexMap[type] ?: return
-                if (provider.getUBBTagName().equals(ImageStyle.TAG_NAME, true)) {
-                    (view as? ImageView)?.let {
-                        var indexOfData = 0
-                        for (index in 0 until indexList.size) {
-                            if (indexList[index] == position) {
-                                indexOfData = index
-                                break
+        mAdapter.setOnItemClickListener(
+            object : UBBContentAdapter.OnItemClickListener {
+                override fun onClick(type: Int, position: Int, view: View) {
+                    val provider = UBB.getProvider(type) ?: return
+                    val dataList = mUBBChildDataMap[type] ?: return
+                    val indexList = mUBBChildIndexMap[type] ?: return
+                    if (provider.getUBBTagName().equals(ImageStyle.TAG_NAME, true)) {
+                        (view as? ImageView)?.let {
+                            var indexOfData = 0
+                            for (index in 0 until indexList.size) {
+                                if (indexList[index] == position) {
+                                    indexOfData = index
+                                    break
+                                }
                             }
+                            mOnImageClickListener?.onClick(dataList, indexOfData, it)
                         }
-                        mOnImageClickListener?.onClick(dataList, indexOfData, it)
                     }
                 }
-            }
 
-        })
+            }
+        )
     }
 
     fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
@@ -318,7 +358,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 添加Header
      */
-    fun addHeader(adapter: Adapter<ViewHolder>) {
+    fun addHeader(adapter: HeadOrFootAdapter<out ViewBinding>) {
         if (mHeaderAdapterList.contains(adapter)) {
             return
         }
@@ -329,7 +369,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 移除Header
      */
-    fun removeHeader(adapter: Adapter<ViewHolder>) {
+    fun removeHeader(adapter: HeadOrFootAdapter<out ViewBinding>) {
         if (mHeaderAdapterList.contains(adapter)) {
             mHeaderAdapterList.remove(adapter)
         }
@@ -350,7 +390,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 添加Footer
      */
-    fun addFooter(adapter: Adapter<ViewHolder>) {
+    fun addFooter(adapter: HeadOrFootAdapter<out ViewBinding>) {
         if (mFooterAdapterList.contains(adapter)) {
             return
         }
@@ -361,7 +401,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 移除Footer
      */
-    fun removeFooter(adapter: Adapter<ViewHolder>) {
+    fun removeFooter(adapter: HeadOrFootAdapter<out ViewBinding>) {
         if (mFooterAdapterList.contains(adapter)) {
             mFooterAdapterList.remove(adapter)
         }

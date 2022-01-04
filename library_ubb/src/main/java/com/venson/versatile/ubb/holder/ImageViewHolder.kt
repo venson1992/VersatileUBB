@@ -143,10 +143,16 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
             if (tag?.equals(url) != true) {
                 return
             }
-            val resourceWidth = resource.width
-            val resourceHeight = resource.height
+            var resourceWidth = resource.width
+            var resourceHeight = resource.height
             if (itemWidth == 0) {
                 itemWidth = resourceWidth
+            } else {
+                //以1080p作为显示标准
+                if (itemWidth > BASIC_WIDTH_PIXEL_MIN) {
+                    resourceWidth = resourceWidth.times(itemWidth).div(BASIC_WIDTH_PIXEL)
+                    resourceHeight = resourceHeight.times(itemWidth).div(BASIC_WIDTH_PIXEL)
+                }
             }
             val displayWidth: Int = if (imageWidth == UBBContentView.IMAGE_WIDTH_MATCH) {
                 itemWidth
@@ -183,6 +189,9 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
     }
 
     companion object {
+
+        private const val BASIC_WIDTH_PIXEL = 1080
+        private const val BASIC_WIDTH_PIXEL_MIN = 960//1080-45-45=990
 
         fun build(context: Context): ImageViewHolder {
             val itemView = ConstraintLayout(context)

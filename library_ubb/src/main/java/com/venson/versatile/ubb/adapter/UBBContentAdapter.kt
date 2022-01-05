@@ -124,8 +124,16 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     override fun onBindViewHolder(holder: AbcViewHolder, position: Int) {
         val ubbContentBean = mContentData?.get(position) ?: return
-        val parentWidth = mRecyclerView?.measuredWidth?.let {
-            it - getHorizontalSpacing() - getHorizontalSpacing()
+        val parentWidth = mRecyclerView?.let { recyclerView ->
+            if (recyclerView.measuredWidth > 0) {
+                (recyclerView.measuredWidth
+                        - recyclerView.paddingLeft
+                        - recyclerView.paddingRight
+                        - getHorizontalSpacing()
+                        - getHorizontalSpacing())
+            } else {
+                0
+            }
         } ?: 0
         holder.bindData(this, ubbContentBean, parentWidth)
         holder.updateMargin(

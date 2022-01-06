@@ -8,7 +8,6 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.lxj.xpopup.XPopup
 import com.lxj.xpopup.util.SmartGlideImageLoader
-import com.venson.versatile.ubb.adapter.HeadOrFootAdapter
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailBinding
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailFooterBinding
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailHeaderBinding
@@ -17,6 +16,9 @@ import com.venson.versatile.ubb.widget.UBBContentView
 class DetailByContentActivity : AppCompatActivity() {
 
     private lateinit var mBinding: ActivityDetailBinding
+
+    private lateinit var mHeaderBinding: ActivityDetailHeaderBinding
+    private lateinit var mFooterBinding: ActivityDetailFooterBinding
 
     companion object {
 
@@ -35,8 +37,22 @@ class DetailByContentActivity : AppCompatActivity() {
         setContentView(mBinding.root)
         supportActionBar?.title = UBBContentView::class.java.simpleName
         val dataBean = intent?.getParcelableExtra<DataBean>("data")
-        mBinding.contentView.addHeader(HeadAdapter(dataBean))
-        mBinding.contentView.addFooter(FootAdapter())
+        /*
+        header
+         */
+        mHeaderBinding = ActivityDetailHeaderBinding
+            .inflate(layoutInflater, mBinding.contentView, false)
+        mHeaderBinding.titleView.text = dataBean?.title ?: ""
+        mBinding.contentView.addHeader(mHeaderBinding.root)
+        /*
+        footer
+         */
+        mFooterBinding = ActivityDetailFooterBinding
+            .inflate(layoutInflater, mBinding.contentView, false)
+        mBinding.contentView.addFooter(mFooterBinding.root)
+        /*
+        ubb相关
+         */
         mBinding.contentView.setUBB(this, dataBean?.content)
         mBinding.contentView.setOnImageClickListener(object : UBBContentView.OnImageClickListener {
             override fun onClick(pathList: List<String>, index: Int, view: ImageView) {
@@ -67,26 +83,4 @@ class DetailByContentActivity : AppCompatActivity() {
         })
     }
 
-    class HeadAdapter(private val dataBean: DataBean?) :
-        HeadOrFootAdapter<ActivityDetailHeaderBinding>() {
-
-        override fun onInflateBinding(binding: ActivityDetailHeaderBinding) {
-
-        }
-
-        override fun onBindBinding(binding: ActivityDetailHeaderBinding) {
-            binding.titleView.text = dataBean?.title ?: ""
-        }
-    }
-
-    class FootAdapter : HeadOrFootAdapter<ActivityDetailFooterBinding>() {
-        override fun onInflateBinding(binding: ActivityDetailFooterBinding) {
-
-        }
-
-        override fun onBindBinding(binding: ActivityDetailFooterBinding) {
-
-        }
-
-    }
 }

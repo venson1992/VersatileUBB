@@ -15,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewbinding.ViewBinding
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.HeadOrFootAdapter
@@ -99,10 +98,8 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
 
     private var mOnImageClickListener: OnImageClickListener? = null
 
-    private val mHeaderAdapterList: MutableList<HeadOrFootAdapter<out ViewBinding>> =
-        mutableListOf()
-    private val mFooterAdapterList: MutableList<HeadOrFootAdapter<out ViewBinding>> =
-        mutableListOf()
+    private val mHeaderAdapterList: MutableList<HeadOrFootAdapter> = mutableListOf()
+    private val mFooterAdapterList: MutableList<HeadOrFootAdapter> = mutableListOf()
 
     init {
         layoutManager = LinearLayoutManager(context, VERTICAL, false)
@@ -223,11 +220,17 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         initAdapterParams()
     }
 
+    /**
+     * 设置adapter
+     */
     fun setAdapter(adapter: UBBContentAdapter) {
         this.adapter = adapter
         initAdapterParams()
     }
 
+    /**
+     * 初始化adapter参数
+     */
     private fun initAdapterParams() {
         mAdapter.initParams(
             mTextColor,
@@ -266,6 +269,9 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         )
     }
 
+    /**
+     * 设置ubb文本
+     */
     fun setUBB(lifecycleOwner: LifecycleOwner, ubb: String?) {
         lifecycleOwner.lifecycle.let { lifecycle ->
             lifecycle.removeObserver(this)
@@ -310,6 +316,9 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         }
     }
 
+    /**
+     * 滚动到指定view位置
+     */
     fun scrollToIndex(index: Int, listener: OnImageScrollDisplayListener) {
         val layoutManager = layoutManager as? LinearLayoutManager ?: return
         try {
@@ -358,10 +367,8 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 添加Header
      */
-    fun addHeader(adapter: HeadOrFootAdapter<out ViewBinding>) {
-        if (mHeaderAdapterList.contains(adapter)) {
-            return
-        }
+    fun addHeader(view: View) {
+        val adapter = HeadOrFootAdapter(view)
         adapter.updateSpacing(mHeadSpacing, 0)
         mHeaderAdapterList.add(adapter)
         updateAdapter()
@@ -370,11 +377,17 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 移除Header
      */
-    fun removeHeader(adapter: HeadOrFootAdapter<out ViewBinding>) {
-        if (mHeaderAdapterList.contains(adapter)) {
-            mHeaderAdapterList.remove(adapter)
+    fun removeHeader(view: View) {
+        mHeaderAdapterList.iterator().let { iterator ->
+            while (iterator.hasNext()) {
+                val adapter = iterator.next()
+                if (adapter.view == view) {
+                    iterator.remove()
+                    updateAdapter()
+                    break
+                }
+            }
         }
-        updateAdapter()
     }
 
     /**
@@ -391,10 +404,8 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 添加Footer
      */
-    fun addFooter(adapter: HeadOrFootAdapter<out ViewBinding>) {
-        if (mFooterAdapterList.contains(adapter)) {
-            return
-        }
+    fun addFooter(view: View) {
+        val adapter = HeadOrFootAdapter(view)
         adapter.updateSpacing(0, mFootSpacing)
         mFooterAdapterList.add(adapter)
         updateAdapter()
@@ -403,11 +414,17 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 移除Footer
      */
-    fun removeFooter(adapter: HeadOrFootAdapter<out ViewBinding>) {
-        if (mFooterAdapterList.contains(adapter)) {
-            mFooterAdapterList.remove(adapter)
+    fun removeFooter(view: View) {
+        mFooterAdapterList.iterator().let { iterator ->
+            while (iterator.hasNext()) {
+                val adapter = iterator.next()
+                if (adapter.view == view) {
+                    iterator.remove()
+                    updateAdapter()
+                    break
+                }
+            }
         }
-        updateAdapter()
     }
 
     /**

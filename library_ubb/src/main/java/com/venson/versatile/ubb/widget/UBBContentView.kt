@@ -1,20 +1,33 @@
 package com.venson.versatile.ubb.widget
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.drawable.ColorDrawable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.Px
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.imageview.ShapeableImageView
+import com.google.android.material.shape.CornerFamily
+import com.google.android.material.shape.ShapeAppearanceModel
 import com.venson.versatile.ubb.R
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.adapter.HeadOrFootAdapter
@@ -28,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
+
 
 /**
  * UBB内容展示
@@ -98,12 +112,20 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
 
     private var mOnImageClickListener: OnImageClickListener? = null
 
+    private var mHeadView: View? = null
+    private var mFootView: View? = null
+
     private val mHeaderAdapterList: MutableList<HeadOrFootAdapter> = mutableListOf()
     private val mFooterAdapterList: MutableList<HeadOrFootAdapter> = mutableListOf()
 
+    private val linearLayout by lazy { LinearLayout(context) }
+
     init {
         layoutManager = LinearLayoutManager(context, VERTICAL, false)
-        setAdapter(mAdapter)
+        if (isInEditMode) {
+            linearLayout.orientation = LinearLayout.VERTICAL
+            linearLayout.layoutParams = LayoutParams(500, 500)
+        }
     }
 
     private fun initAttrs(context: Context, attrs: AttributeSet?) {
@@ -179,6 +201,52 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             )
         }
         /*
+        header布局id
+         */
+        if (array.hasValue(R.styleable.UBBContentView_header)) {
+            val layoutResId = array.getResourceId(
+                R.styleable.UBBContentView_header, 0
+            )
+            if (layoutResId != 0) {
+                try {
+                    mHeadView = LayoutInflater.from(context).inflate(
+                        layoutResId,
+                        if (isInEditMode) {
+                            linearLayout
+                        } else {
+                            this
+                        },
+                        false
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        /*
+        footer布局id
+         */
+        if (array.hasValue(R.styleable.UBBContentView_footer)) {
+            val layoutResId = array.getResourceId(
+                R.styleable.UBBContentView_footer, 0
+            )
+            if (layoutResId != 0) {
+                try {
+                    mFootView = LayoutInflater.from(context).inflate(
+                        layoutResId,
+                        if (isInEditMode) {
+                            linearLayout
+                        } else {
+                            this
+                        },
+                        false
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        /*
         图片展示宽度
          */
         if (array.hasValue(R.styleable.UBBContentView_imageWidth)) {
@@ -221,14 +289,6 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     }
 
     /**
-     * 设置adapter
-     */
-    fun setAdapter(adapter: UBBContentAdapter) {
-        this.adapter = adapter
-        initAdapterParams()
-    }
-
-    /**
      * 初始化adapter参数
      */
     private fun initAdapterParams() {
@@ -244,7 +304,6 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             mImagePlaceholderRes,
             mImagePlaceholderRatio
         )
-        updateAdapter()
         mAdapter.setOnItemClickListener(
             object : UBBContentAdapter.OnItemClickListener {
                 override fun onClick(type: Int, position: Int, view: View) {
@@ -267,6 +326,48 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
 
             }
         )
+        mHeadView?.let {
+            if (isInEditMode) {
+                linearLayout.addView(it)
+                it.layoutParams?.let { layoutParams ->
+                    layoutParams as MarginLayoutParams
+                    layoutParams.bottomMargin = mHeadSpacing
+                }
+            } else {
+                addHeader(it)
+            }
+        }
+        if (isInEditMode) {
+            addTextView(
+                0,
+                SpannableStringBuilder()
+                    .append("Android Studio is Android's official IDE. ")
+                    .append("It is purpose-built for Android to accelerate your development and ")
+                    .append("help you build the highest-quality apps for every Android device.")
+            )
+            addImageView()
+            addTextView(
+                1,
+                SpannableStringBuilder()
+                    .append("Based on Intellij IDEA, ")
+                    .append("Android Studio provides the fastest possible ")
+                    .append("turnaround on your coding and running workflow.")
+            )
+        }
+        mFootView?.let {
+            if (isInEditMode) {
+                linearLayout.addView(it)
+                it.layoutParams?.let { layoutParams ->
+                    layoutParams as MarginLayoutParams
+                    layoutParams.topMargin = mFootSpacing
+                }
+            } else {
+                addFooter(it)
+            }
+        }
+        if (mHeaderAdapterList.isEmpty() && mFooterAdapterList.isEmpty()) {
+            updateAdapter()
+        }
     }
 
     /**
@@ -401,6 +502,10 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         updateAdapter()
     }
 
+    fun getHeaderView(): View? {
+        return mHeadView
+    }
+
     /**
      * 添加Footer
      */
@@ -438,6 +543,10 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         updateAdapter()
     }
 
+    fun getFooterView(): View? {
+        return mFootView
+    }
+
     /**
      * 组合adapter
      */
@@ -460,5 +569,113 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
 
     interface OnImageScrollDisplayListener {
         fun onScrollDisplay(itemView: View, imageView: ImageView)
+    }
+
+    /**
+     * 添加预览文本
+     */
+    private fun addTextView(index: Int, text: SpannableStringBuilder) {
+        if (!isInEditMode) {
+            return
+        }
+        val textView = TextView(context).also {
+            it.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize)
+            it.setTextColor(mTextColor)
+            it.setLineSpacing(mLineSpacingExtra, mLineSpacingMultiplier)
+            text.setSpan(
+                ForegroundColorSpan(mTextColor),
+                0,
+                text.length,
+                SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            it.text = text
+        }
+        linearLayout.addView(textView, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        textView.layoutParams?.let { layoutParams ->
+            layoutParams as MarginLayoutParams
+            layoutParams.leftMargin = mHorizontalSpacing
+            layoutParams.rightMargin = mHorizontalSpacing
+            layoutParams.topMargin = if (index == 0) {
+                0
+            } else {
+                mVerticalSpacing
+            }
+        }
+    }
+
+    /**
+     * 添加图片预览样式
+     */
+    private fun addImageView() {
+        if (!isInEditMode) {
+            return
+        }
+        val constraintLayout = ConstraintLayout(context)
+        val imageView = ShapeableImageView(context)
+        if (mImagePlaceholderRes == 0) {
+            imageView.setImageDrawable(ColorDrawable(Color.LTGRAY))
+        } else {
+            imageView.setImageResource(mImagePlaceholderRes)
+        }
+        imageView.adjustViewBounds = true
+        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+        imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
+            .setAllCorners(CornerFamily.ROUNDED, mImageCorners)
+            .build()
+        constraintLayout.addView(
+            imageView,
+            ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.MATCH_PARENT, 0
+            ).also {
+                it.dimensionRatio = mImagePlaceholderRatio
+                it.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+            }
+        )
+        linearLayout.addView(constraintLayout, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        constraintLayout.layoutParams?.let { layoutParams ->
+            layoutParams as MarginLayoutParams
+            layoutParams.leftMargin = mHorizontalSpacing
+            layoutParams.rightMargin = mHorizontalSpacing
+            layoutParams.topMargin = mVerticalSpacing
+        }
+    }
+
+    override fun draw(c: Canvas?) {
+        super.draw(c)
+        if (isInEditMode) {
+            /*
+            去除默认数据
+             */
+            c?.drawRect(
+                Rect(0, 0, width, height),
+                Paint().also { paint ->
+                    paint.color = Color.WHITE
+                    background?.let { background ->
+                        if (background is ColorDrawable) {
+                            paint.color = background.color
+                        }
+                    }
+                    paint.style = Paint.Style.FILL
+                }
+            )
+            /*
+            计算高度
+             */
+            val measuredWidth = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
+            val measuredHeight = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+            var layoutHeight = 0
+            for (index in 0 until linearLayout.childCount) {
+                val child = linearLayout.getChildAt(index)
+                child.measure(measuredWidth, measuredHeight)
+                layoutHeight += child.measuredHeight
+            }
+            val heightMeasureSpec = MeasureSpec.makeMeasureSpec(layoutHeight, MeasureSpec.EXACTLY);
+            /*
+            预览视图绘制
+             */
+            linearLayout.measure(measuredWidth, heightMeasureSpec)
+            linearLayout.layout(0, 0, linearLayout.measuredWidth, linearLayout.measuredHeight)
+            linearLayout.draw(c)
+        }
     }
 }

@@ -9,16 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lxj.xpopup.XPopup
 import com.lxj.xpopup.util.SmartGlideImageLoader
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailBinding
-import com.venson.versatile.ubb.demo.databinding.ActivityDetailFooterBinding
 import com.venson.versatile.ubb.demo.databinding.ActivityDetailHeaderBinding
 import com.venson.versatile.ubb.widget.UBBContentView
 
 class DetailByContentActivity : AppCompatActivity() {
 
     private lateinit var mBinding: ActivityDetailBinding
-
-    private lateinit var mHeaderBinding: ActivityDetailHeaderBinding
-    private lateinit var mFooterBinding: ActivityDetailFooterBinding
 
     companion object {
 
@@ -40,16 +36,10 @@ class DetailByContentActivity : AppCompatActivity() {
         /*
         header
          */
-        mHeaderBinding = ActivityDetailHeaderBinding
-            .inflate(layoutInflater, mBinding.contentView, false)
-        mHeaderBinding.titleView.text = dataBean?.title ?: ""
-        mBinding.contentView.addHeader(mHeaderBinding.root)
-        /*
-        footer
-         */
-        mFooterBinding = ActivityDetailFooterBinding
-            .inflate(layoutInflater, mBinding.contentView, false)
-        mBinding.contentView.addFooter(mFooterBinding.root)
+        mBinding.contentView.getHeaderView()?.let { headerView ->
+            val headerBinding = ActivityDetailHeaderBinding.bind(headerView)
+            headerBinding.titleView.text = dataBean?.title ?: ""
+        }
         /*
         ubb相关
          */

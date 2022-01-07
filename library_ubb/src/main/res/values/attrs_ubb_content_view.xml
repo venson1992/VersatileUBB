@@ -16,5 +16,7 @@
         <attr name="imageCorners" format="dimension" />
         <attr name="imagePlaceholder" format="reference" />
         <attr name="imagePlaceholderRatio" format="string" />
+        <attr name="header" format="reference" />
+        <attr name="footer" format="reference" />
     </declare-styleable>
 </resources>

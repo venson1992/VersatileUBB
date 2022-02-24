@@ -39,7 +39,18 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     private var mHorizontalSpacing: Int = 0
 
     @Px
-    private var mImageCorners: Float = 0F
+    private var mImageLeftTopCorners: Float = 0F
+
+    @Px
+    private var mImageRightTopCorners: Float = 0F
+
+    @Px
+    private var mImageRightBottomCorners: Float = 0F
+
+    @Px
+    private var mImageLeftBottomCorners: Float = 0F
+
+    private var mImageCornersEnableFlags: Int = 0
 
     @Px
     private var mImageWidth: Int = UBBContentView.IMAGE_WIDTH_MATCH
@@ -62,7 +73,11 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         lineSpacingMultiplier: Float,
         verticalSpacing: Int,
         horizontalSpacing: Int,
-        imageCorners: Float,
+        imageLeftTopCorners: Float,
+        imageRightTopCorners: Float,
+        imageRightBottomCorners: Float,
+        imageLeftBottomCorners: Float,
+        imageCornersEnableFlags: Int,
         imageWidth: Int,
         imagePlaceholderRes: Int,
         imagePlaceholderRatio: String
@@ -73,7 +88,11 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         mLineSpacingMultiplier = lineSpacingMultiplier
         mVerticalSpacing = verticalSpacing
         mHorizontalSpacing = horizontalSpacing
-        mImageCorners = imageCorners
+        mImageLeftTopCorners = imageLeftTopCorners
+        mImageRightTopCorners = imageRightTopCorners
+        mImageRightBottomCorners = imageRightBottomCorners
+        mImageLeftBottomCorners = imageLeftBottomCorners
+        mImageCornersEnableFlags = imageCornersEnableFlags
         mImageWidth = imageWidth
         mImagePlaceholderRes = imagePlaceholderRes
         mImagePlaceholderRatio = imagePlaceholderRatio
@@ -98,7 +117,14 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     fun getHorizontalSpacing(): Int = mHorizontalSpacing
 
     @Px
-    fun getImageCorners(): Float = mImageCorners
+    fun getImageCorners(): Array<Float> = arrayOf(
+        mImageLeftTopCorners,
+        mImageRightTopCorners,
+        mImageRightBottomCorners,
+        mImageLeftBottomCorners
+    )
+
+    fun getImageCornersEnableFlags(): Int = mImageCornersEnableFlags
 
     @Px
     fun getImageWidth(): Int = mImageWidth

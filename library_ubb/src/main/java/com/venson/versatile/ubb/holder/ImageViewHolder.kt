@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -81,13 +82,23 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
             imageView.layoutParams = layoutParams
         }
         imageView.setTag(R.id.id_ubb_image, url)
-        loadPlaceholder(adapter, adapter.getImageCorners(), url)
+        loadPlaceholder(
+            adapter,
+            adapter.getImageCorners(),
+            adapter.getImageCornersEnableFlags(),
+            url,
+            bindingAdapterPosition == 0,
+            bindingAdapterPosition == adapter.itemCount - 1
+        )
         val imageTarget = LoadImageTarget(
             url,
             imageWidth,
             parentWidth,
             adapter.getImageCorners(),
-            adapter
+            adapter.getImageCornersEnableFlags(),
+            adapter,
+            bindingAdapterPosition == 0,
+            bindingAdapterPosition == adapter.itemCount - 1
         )
         Glide.with(imageView).asBitmap().load(url).into(imageTarget)
         imageView.setOnClickListener {
@@ -98,7 +109,14 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
     /**
      * 加载缺省图
      */
-    private fun loadPlaceholder(adapter: UBBContentAdapter, imageCorners: Float, url: String) {
+    private fun loadPlaceholder(
+        adapter: UBBContentAdapter,
+        imageCorners: Array<Float>,
+        imageCornerEnableFlags: Int,
+        url: String,
+        isFirst: Boolean,
+        isLast: Boolean
+    ) {
         imageView.setImageBitmap(null)
         imageView.layoutParams?.let { layoutParams ->
             if (layoutParams is ConstraintLayout.LayoutParams) {
@@ -115,9 +133,14 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
                 imageView.layoutParams = layoutParams
             }
         }
-        imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
-            .setAllCorners(CornerFamily.ROUNDED, imageCorners)
-            .build()
+        imageView.shapeAppearanceModel = getCornersBuild(
+            1,
+            1,
+            imageCorners,
+            imageCornerEnableFlags,
+            isFirst,
+            isLast
+        )
         val placeholder = if (adapter.getImagePlaceholderRes() == 0) {
             R.drawable.default_drawable
         } else {
@@ -135,8 +158,11 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
         private val url: String,
         private val imageWidth: Int,
         private var itemWidth: Int,
-        private val imageCorners: Float,
-        private val adapter: UBBContentAdapter
+        private val imageCorners: Array<Float>,
+        private val imageCornerEnableFlags: Int,
+        private val adapter: UBBContentAdapter,
+        private val isFirst: Boolean,
+        private val isLast: Boolean
     ) : CustomTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             val tag = imageView.getTag(R.id.id_ubb_image) as? String
@@ -175,10 +201,14 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
                     imageView.layoutParams = layoutParams
                 }
             }
-            val corners = imageCorners.times(displayWidth).div(itemWidth)
-            imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
-                .setAllCorners(CornerFamily.ROUNDED, corners)
-                .build()
+            imageView.shapeAppearanceModel = getCornersBuild(
+                displayWidth,
+                itemWidth,
+                imageCorners,
+                imageCornerEnableFlags,
+                isFirst,
+                isLast
+            )
             Glide.with(imageView).asDrawable().load(url).into(imageView)
         }
 
@@ -186,6 +216,51 @@ class ImageViewHolder(itemView: ConstraintLayout) : AbcViewHolder(itemView) {
 //                    loadPlaceholder(holder, imageWidth)
         }
 
+    }
+
+    private fun getCornersBuild(
+        displayWidth: Int,
+        itemWidth: Int,
+        imageCorners: Array<Float>,
+        imageCornerEnableFlags: Int,
+        isFirst: Boolean,
+        isLast: Boolean
+    ): ShapeAppearanceModel {
+        return ShapeAppearanceModel.builder().apply {
+            val topLeftCorner = imageCorners[0].times(displayWidth).div(itemWidth)
+            val topRightCorner = imageCorners[1].times(displayWidth).div(itemWidth)
+            val bottomRightCorner = imageCorners[2].times(displayWidth).div(itemWidth)
+            val bottomLeftCorner = imageCorners[3].times(displayWidth).div(itemWidth)
+            if (imageCornerEnableFlags.or(UBBContentView.IMAGE_CORNERS_ENABLE_ANY_FLAG)
+                == imageCornerEnableFlags
+            ) {
+                setTopLeftCorner(CornerFamily.ROUNDED, topLeftCorner)
+                setTopRightCorner(CornerFamily.ROUNDED, topRightCorner)
+                setBottomRightCorner(CornerFamily.ROUNDED, bottomRightCorner)
+                setBottomLeftCorner(CornerFamily.ROUNDED, bottomLeftCorner)
+                return@apply
+            }
+            if (isFirst) {
+                if (imageCornerEnableFlags.or(UBBContentView.IMAGE_CORNERS_ENABLE_FIRST_FLAG)
+                    == imageCornerEnableFlags
+                    || imageCornerEnableFlags.or(UBBContentView.IMAGE_CORNERS_ENABLE_EDGE_FLAG)
+                    == imageCornerEnableFlags
+                ) {
+                    setTopLeftCorner(CornerFamily.ROUNDED, topLeftCorner)
+                    setTopRightCorner(CornerFamily.ROUNDED, topRightCorner)
+                }
+            }
+            if (isLast) {
+                if (imageCornerEnableFlags.or(UBBContentView.IMAGE_CORNERS_ENABLE_LAST_FLAG)
+                    == imageCornerEnableFlags
+                    || imageCornerEnableFlags.or(UBBContentView.IMAGE_CORNERS_ENABLE_EDGE_FLAG)
+                    == imageCornerEnableFlags
+                ) {
+                    setBottomRightCorner(CornerFamily.ROUNDED, bottomRightCorner)
+                    setBottomLeftCorner(CornerFamily.ROUNDED, bottomLeftCorner)
+                }
+            }
+        }.build()
     }
 
     companion object {

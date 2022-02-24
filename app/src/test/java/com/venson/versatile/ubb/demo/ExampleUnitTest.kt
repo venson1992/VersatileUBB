@@ -1,8 +1,8 @@
 package com.venson.versatile.ubb.demo
 
+import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.JSONObject
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -12,6 +12,16 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+        //"Synopsis":"\"ghbhhbb\"","Title":"游戏哦\(//∇//)\"
+        val text = """
+            {
+            "Synopsis_0":"\"ghbhhbb\"",
+            "Title_0":"游戏哦\\(//∇//)\\",
+            }
+        """
+        val json: JSONObject = JSON.parseObject(String(text.toByteArray()))
+        json["Synopsis_1"] = "\"ghbhhbb\""
+        json["Title_1"] = "游戏哦\\(//∇//)\\"
+        print(json.toJSONString())
     }
 }

@@ -65,6 +65,11 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     companion object {
         const val IMAGE_WIDTH_MATCH = -1
         const val IMAGE_WIDTH_WRAP = -2
+
+        const val IMAGE_CORNERS_ENABLE_ANY_FLAG = 0x10
+        const val IMAGE_CORNERS_ENABLE_FIRST_FLAG = 0x20
+        const val IMAGE_CORNERS_ENABLE_LAST_FLAG = 0x02
+        const val IMAGE_CORNERS_ENABLE_EDGE_FLAG = 0x22
     }
 
     @ColorInt
@@ -92,7 +97,19 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     private var mFootSpacing: Int = 0
 
     @Px
-    private var mImageCorners: Float = 0F
+    private var mImageLeftTopCorners: Float = 0F
+
+    @Px
+    private var mImageLeftBottomCorners: Float = 0F
+
+    @Px
+    private var mImageRightTopCorners: Float = 0F
+
+    @Px
+    private var mImageRightBottomCorners: Float = 0F
+
+    //图片圆角应用方式
+    private var mImageCornersEnableFlag: Int = IMAGE_CORNERS_ENABLE_ANY_FLAG
 
     @Px
     private var mImageWidth: Int = IMAGE_WIDTH_MATCH
@@ -261,11 +278,76 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             }
         }
         /*
+        图片圆角应用规则
+         */
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersEnableFlags)) {
+            mImageCornersEnableFlag = array.getInt(
+                R.styleable.UBBContentView_imageCornersEnableFlags,
+                IMAGE_CORNERS_ENABLE_ANY_FLAG
+            )
+        }
+        /*
         图片圆角
          */
         if (array.hasValue(R.styleable.UBBContentView_imageCorners)) {
-            mImageCorners = array.getDimension(
-                R.styleable.UBBContentView_imageCorners, mImageCorners
+            val defaultCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCorners, 0F
+            )
+            mImageLeftTopCorners = defaultCorners
+            mImageRightTopCorners = defaultCorners
+            mImageRightBottomCorners = defaultCorners
+            mImageLeftBottomCorners = defaultCorners
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersLeft)) {
+            mImageLeftTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftTop, mImageLeftTopCorners
+            )
+            mImageLeftBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftBottom, mImageLeftBottomCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersTop)) {
+            mImageLeftTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftTop, mImageLeftTopCorners
+            )
+            mImageRightTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightTop, mImageRightTopCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersRight)) {
+            mImageRightTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightTop, mImageRightTopCorners
+            )
+            mImageRightBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightBottom, mImageRightBottomCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersBottom)) {
+            mImageLeftBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftBottom, mImageLeftBottomCorners
+            )
+            mImageRightBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightBottom, mImageRightBottomCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersLeftTop)) {
+            mImageLeftTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftTop, mImageLeftTopCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersRightTop)) {
+            mImageRightTopCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightTop, mImageRightTopCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersRightBottom)) {
+            mImageRightBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersRightBottom, mImageRightBottomCorners
+            )
+        }
+        if (array.hasValue(R.styleable.UBBContentView_imageCornersLeftBottom)) {
+            mImageLeftBottomCorners = array.getDimension(
+                R.styleable.UBBContentView_imageCornersLeftBottom, mImageLeftBottomCorners
             )
         }
         /*
@@ -299,7 +381,11 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             mLineSpacingMultiplier,
             mVerticalSpacing,
             mHorizontalSpacing,
-            mImageCorners,
+            mImageLeftTopCorners,
+            mImageRightTopCorners,
+            mImageRightBottomCorners,
+            mImageLeftBottomCorners,
+            mImageCornersEnableFlag,
             mImageWidth,
             mImagePlaceholderRes,
             mImagePlaceholderRatio
@@ -345,7 +431,9 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
                     .append("It is purpose-built for Android to accelerate your development and ")
                     .append("help you build the highest-quality apps for every Android device.")
             )
-            addImageView()
+            addImageView(0, 3)
+            addImageView(1, 3)
+            addImageView(2, 3)
             addTextView(
                 1,
                 SpannableStringBuilder()
@@ -606,7 +694,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     /**
      * 添加图片预览样式
      */
-    private fun addImageView() {
+    private fun addImageView(index: Int, count: Int) {
         if (!isInEditMode) {
             return
         }
@@ -619,9 +707,37 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
         }
         imageView.adjustViewBounds = true
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.shapeAppearanceModel = ShapeAppearanceModel.builder()
-            .setAllCorners(CornerFamily.ROUNDED, mImageCorners)
-            .build()
+        imageView.shapeAppearanceModel = ShapeAppearanceModel.builder().apply {
+            if (mImageCornersEnableFlag.or(IMAGE_CORNERS_ENABLE_ANY_FLAG)
+                == mImageCornersEnableFlag
+            ) {
+                setTopLeftCorner(CornerFamily.ROUNDED, mImageLeftTopCorners)
+                setTopRightCorner(CornerFamily.ROUNDED, mImageRightTopCorners)
+                setBottomRightCorner(CornerFamily.ROUNDED, mImageRightBottomCorners)
+                setBottomLeftCorner(CornerFamily.ROUNDED, mImageLeftBottomCorners)
+                return@apply
+            }
+            if (index == 0) {
+                if (mImageCornersEnableFlag.or(IMAGE_CORNERS_ENABLE_FIRST_FLAG)
+                    == mImageCornersEnableFlag
+                    || mImageCornersEnableFlag.or(IMAGE_CORNERS_ENABLE_EDGE_FLAG)
+                    == mImageCornersEnableFlag
+                ) {
+                    setTopLeftCorner(CornerFamily.ROUNDED, mImageLeftTopCorners)
+                    setTopRightCorner(CornerFamily.ROUNDED, mImageRightTopCorners)
+                }
+            }
+            if (index == count - 1) {
+                if (mImageCornersEnableFlag.or(IMAGE_CORNERS_ENABLE_LAST_FLAG)
+                    == mImageCornersEnableFlag
+                    || mImageCornersEnableFlag.or(IMAGE_CORNERS_ENABLE_EDGE_FLAG)
+                    == mImageCornersEnableFlag
+                ) {
+                    setBottomRightCorner(CornerFamily.ROUNDED, mImageRightBottomCorners)
+                    setBottomLeftCorner(CornerFamily.ROUNDED, mImageLeftBottomCorners)
+                }
+            }
+        }.build()
         constraintLayout.addView(
             imageView,
             ConstraintLayout.LayoutParams(

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <declare-styleable name="UBBContentView">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <declare-styleable name="UBBContentView" tools:context=".widget.UBBContentView">
         <attr name="android:textColor" />
         <attr name="android:textSize" />
         <attr name="android:lineSpacingExtra" />
@@ -14,6 +14,20 @@
             <enum name="wrap_content" value="-2" />
         </attr>
         <attr name="imageCorners" format="dimension" />
+        <attr name="imageCornersLeft" format="dimension" />
+        <attr name="imageCornersLeftTop" format="dimension" />
+        <attr name="imageCornersLeftBottom" format="dimension" />
+        <attr name="imageCornersTop" format="dimension" />
+        <attr name="imageCornersRight" format="dimension" />
+        <attr name="imageCornersRightTop" format="dimension" />
+        <attr name="imageCornersRightBottom" format="dimension" />
+        <attr name="imageCornersBottom" format="dimension" />
+        <attr name="imageCornersEnableFlags">
+            <flag name="any" value="0x10" />
+            <flag name="first" value="0x20" />
+            <flag name="last" value="0x02" />
+            <flag name="edge" value="0x22" />
+        </attr>
         <attr name="imagePlaceholder" format="reference" />
         <attr name="imagePlaceholderRatio" format="string" />
         <attr name="header" format="reference" />

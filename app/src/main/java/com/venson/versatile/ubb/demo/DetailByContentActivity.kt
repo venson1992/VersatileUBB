@@ -46,7 +46,7 @@ class DetailByContentActivity : AppCompatActivity() {
         mBinding.contentView.setUBB(this, dataBean?.content)
         mBinding.contentView.setOnImageClickListener(object : UBBContentView.OnImageClickListener {
             override fun onClick(pathList: List<String>, index: Int, view: ImageView) {
-                XPopup.Builder(view.context)
+                XPopup.Builder(this@DetailByContentActivity)
                     .asImageViewer(
                         view,
                         index,

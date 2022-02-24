@@ -494,7 +494,7 @@ abstract class AbstractConvert(val context: Context) {
             dest,
             "back=(.*?)",
             "back",
-            "<span style=\"background-color:$2\">",
+            "<span bgcolor=\"$2\">",
             "</span>"
         )
         return dest

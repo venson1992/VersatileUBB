@@ -189,6 +189,14 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             )
         }
         /*
+        头尾边距间隔
+         */
+        if (array.hasValue(R.styleable.UBBContentView_verticalEdgeSpacing)) {
+            mVerticalEdgeSpacing = array.getDimensionPixelSize(
+                R.styleable.UBBContentView_verticalEdgeSpacing, mVerticalEdgeSpacing
+            )
+        }
+        /*
         媒体文件间隔
          */
         if (array.hasValue(R.styleable.UBBContentView_android_verticalSpacing)) {

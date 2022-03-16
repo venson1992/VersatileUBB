@@ -221,6 +221,31 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     class Builder {
 
+        private val mContext: Context
+        private val mLifecycleOwner: LifecycleOwner
+
+        constructor(activity: AppCompatActivity) {
+            mContext = activity
+            mLifecycleOwner = activity
+        }
+
+        constructor(fragment: Fragment) {
+            mContext = fragment.requireContext()
+            mLifecycleOwner = fragment
+        }
+
+        constructor(context: Context, lifecycleOwner: LifecycleOwner) {
+            mContext = context
+            mLifecycleOwner = lifecycleOwner
+        }
+
+        private var mUBB: String? = null
+
+        fun setUBB(ubb: String?): Builder {
+            mUBB = ubb
+            return this
+        }
+
         @ColorInt
         private var mTextColor: Int = Color.BLACK
 
@@ -301,6 +326,14 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
             return this
         }
 
+        fun setImageCorners(@Px imageCorners: Float): Builder {
+            mImageLeftTopCorners = imageCorners
+            mImageRightTopCorners = imageCorners
+            mImageRightBottomCorners = imageCorners
+            mImageLeftBottomCorners = imageCorners
+            return this
+        }
+
         private var mImageCornersEnableFlags: Int = 0
 
         fun setImageCornersEnableFlags(imageCornersEnableFlags: Int): Builder {
@@ -319,33 +352,22 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         @DrawableRes
         private var mImagePlaceholderRes: Int = 0
 
-        fun setImagePlaceholderRes(@DrawableRes imagePlaceholderRes: Int): Builder {
-            mImagePlaceholderRes = imagePlaceholderRes
-            return this
-        }
-
         private var mImagePlaceholderRatio: String = "2:1"
 
-        fun setImagePlaceholderRatio(widthBase: Int, heightBase: Int): Builder {
+
+        fun setImagePlaceholderRes(
+            @DrawableRes imagePlaceholderRes: Int,
+            widthBase: Int = 2,
+            heightBase: Int = 1
+        ): Builder {
+            mImagePlaceholderRes = imagePlaceholderRes
             mImagePlaceholderRatio = "$widthBase:$heightBase"
             return this
         }
 
-        private var mUBB: String? = null
+        private var mInflatedUBB: String? = null
 
-        fun build(fragment: Fragment, ubb: String?): UBBContentAdapter {
-            return build(fragment.requireContext(), fragment, ubb)
-        }
-
-        fun build(activity: AppCompatActivity, ubb: String?): UBBContentAdapter {
-            return build(activity, activity, ubb)
-        }
-
-        fun build(
-            context: Context,
-            lifecycleOwner: LifecycleOwner,
-            ubb: String?
-        ): UBBContentAdapter {
+        fun build(): UBBContentAdapter {
             return UBBContentAdapter().also {
                 it.initParams(
                     mTextColor,
@@ -363,17 +385,17 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
                     mImagePlaceholderRes,
                     mImagePlaceholderRatio
                 )
-                if (mUBB == ubb) {
+                if (mInflatedUBB == mUBB) {
                     return@also
                 }
-                lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                mLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                     withContext(Dispatchers.IO) {
-                        val ubbConvert = UBBContentViewConvert(context)
-                        ubbConvert.parseUBB4SpannableStringBuilder(ubb)
+                        val ubbConvert = UBBContentViewConvert(mContext)
+                        ubbConvert.parseUBB4SpannableStringBuilder(mUBB)
                         val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
                         withContext(Dispatchers.Main) {
                             it.setData(ubbContentBeanList)
-                            mUBB = ubb
+                            mInflatedUBB = mUBB
                         }
                     }
                 }

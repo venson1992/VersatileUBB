@@ -48,6 +48,9 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
     private var mHorizontalSpacing: Int = 0
 
     @Px
+    private var mVerticalEdgeSpacing: Int = 0
+
+    @Px
     private var mImageLeftTopCorners: Float = 0F
 
     @Px
@@ -80,6 +83,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         textSize: Float,
         lineSpacingExtra: Float,
         lineSpacingMultiplier: Float,
+        verticalEdgeSpacing: Int,
         verticalSpacing: Int,
         horizontalSpacing: Int,
         imageLeftTopCorners: Float,
@@ -95,6 +99,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         mTextSize = textSize
         mLineSpacingExtra = lineSpacingExtra
         mLineSpacingMultiplier = lineSpacingMultiplier
+        mVerticalEdgeSpacing = verticalEdgeSpacing
         mVerticalSpacing = verticalSpacing
         mHorizontalSpacing = horizontalSpacing
         mImageLeftTopCorners = imageLeftTopCorners
@@ -118,6 +123,9 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     @Px
     fun getLineSpacingMultiplier(): Float = mLineSpacingMultiplier
+
+    @Px
+    fun getVerticalEdgeSpacing(): Int = mVerticalEdgeSpacing
 
     @Px
     fun getVerticalSpacing(): Int = mVerticalSpacing
@@ -173,6 +181,8 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         holder.bindData(this, ubbContentBean, parentWidth)
         holder.updateMargin(
             holder.bindingAdapterPosition,
+            itemCount,
+            getVerticalEdgeSpacing(),
             getVerticalSpacing(),
             getHorizontalSpacing()
         )
@@ -279,6 +289,14 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
         }
 
         @Px
+        private var mVerticalEdgeSpacing: Int = 0
+
+        fun setVerticalEdgeSpacing(@Px verticalEdgeSpacing: Int): Builder {
+            mVerticalEdgeSpacing = verticalEdgeSpacing
+            return this
+        }
+
+        @Px
         private var mVerticalSpacing: Int = 0
 
         fun setVerticalSpacing(@Px verticalSpacing: Int): Builder {
@@ -354,7 +372,6 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
         private var mImagePlaceholderRatio: String = "2:1"
 
-
         fun setImagePlaceholderRes(
             @DrawableRes imagePlaceholderRes: Int,
             widthBase: Int = 2,
@@ -374,6 +391,7 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
                     mTextSize,
                     mLineSpacingExtra,
                     mLineSpacingMultiplier,
+                    mVerticalEdgeSpacing,
                     mVerticalSpacing,
                     mHorizontalSpacing,
                     mImageLeftTopCorners,

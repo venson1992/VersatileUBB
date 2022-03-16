@@ -22,15 +22,27 @@ abstract class AbcViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     /**
      * 设置间距
      */
-    internal fun updateMargin(position: Int, verticalSpacing: Int, horizontalSpacing: Int) {
+    internal fun updateMargin(
+        position: Int,
+        dataCount: Int,
+        verticalEdgeSpacing: Int,
+        verticalSpacing: Int,
+        horizontalSpacing: Int
+    ) {
         val topMargin = if (position == 0) {
-            0
+            verticalEdgeSpacing
         } else {
             verticalSpacing
+        }
+        val bottomMargin = if (position == dataCount - 1) {
+            verticalEdgeSpacing
+        } else {
+            0
         }
         itemView.layoutParams?.let { layoutParams ->
             layoutParams as ViewGroup.MarginLayoutParams
             layoutParams.topMargin = topMargin
+            layoutParams.bottomMargin = bottomMargin
             layoutParams.marginStart = horizontalSpacing
             layoutParams.marginEnd = horizontalSpacing
             layoutParams.leftMargin = horizontalSpacing

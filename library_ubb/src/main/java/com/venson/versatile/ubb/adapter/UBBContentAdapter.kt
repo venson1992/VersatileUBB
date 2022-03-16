@@ -1,6 +1,7 @@
 package com.venson.versatile.ubb.adapter
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Point
 import android.view.View
@@ -8,12 +9,20 @@ import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.Px
+import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.venson.versatile.ubb.UBB
 import com.venson.versatile.ubb.bean.UBBContentBean
+import com.venson.versatile.ubb.convert.UBBContentViewConvert
 import com.venson.versatile.ubb.holder.AbcViewHolder
 import com.venson.versatile.ubb.holder.DefaultViewHolder
 import com.venson.versatile.ubb.widget.UBBContentView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 内部使用的视图绑定器
@@ -208,5 +217,168 @@ class UBBContentAdapter : RecyclerView.Adapter<AbcViewHolder>() {
 
     interface OnItemClickListener {
         fun onClick(type: Int, position: Int, view: View)
+    }
+
+    class Builder {
+
+        @ColorInt
+        private var mTextColor: Int = Color.BLACK
+
+        fun setTextColor(@ColorInt textColor: Int): Builder {
+            mTextColor = textColor
+            return this
+        }
+
+        @Px
+        private var mTextSize: Float = 0F
+
+        fun setTextSize(@Px textSize: Float): Builder {
+            mTextSize = textSize
+            return this
+        }
+
+        @Px
+        private var mLineSpacingExtra: Float = 0F
+
+        fun setLineSpacingExtra(@Px lineSpaceExtra: Float): Builder {
+            mLineSpacingExtra = lineSpaceExtra
+            return this
+        }
+
+        @Px
+        private var mLineSpacingMultiplier: Float = 1.0F
+
+        fun setLineSpacingMultiplier(@Px lineSpaceMultiplier: Float): Builder {
+            mLineSpacingMultiplier = lineSpaceMultiplier
+            return this
+        }
+
+        @Px
+        private var mVerticalSpacing: Int = 0
+
+        fun setVerticalSpacing(@Px verticalSpacing: Int): Builder {
+            mVerticalSpacing = verticalSpacing
+            return this
+        }
+
+        @Px
+        private var mHorizontalSpacing: Int = 0
+
+        fun setHorizontalSpacing(@Px horizontalSpacing: Int): Builder {
+            mHorizontalSpacing = horizontalSpacing
+            return this
+        }
+
+        @Px
+        private var mImageLeftTopCorners: Float = 0F
+
+        fun setImageLeftTopCorners(@Px imageLeftTopCorners: Float): Builder {
+            mImageLeftTopCorners = imageLeftTopCorners
+            return this
+        }
+
+        @Px
+        private var mImageRightTopCorners: Float = 0F
+
+        fun setImageRightTopCorners(@Px imageRightTopCorners: Float): Builder {
+            mImageRightTopCorners = imageRightTopCorners
+            return this
+        }
+
+        @Px
+        private var mImageRightBottomCorners: Float = 0F
+
+        fun setImageRightBottomCorners(@Px imageRightBottomCorners: Float): Builder {
+            mImageRightBottomCorners = imageRightBottomCorners
+            return this
+        }
+
+        @Px
+        private var mImageLeftBottomCorners: Float = 0F
+
+        fun setImageLeftBottomCorners(@Px imageLeftBottomCorners: Float): Builder {
+            mImageLeftBottomCorners = imageLeftBottomCorners
+            return this
+        }
+
+        private var mImageCornersEnableFlags: Int = 0
+
+        fun setImageCornersEnableFlags(imageCornersEnableFlags: Int): Builder {
+            mImageCornersEnableFlags = imageCornersEnableFlags
+            return this
+        }
+
+        @Px
+        private var mImageWidth: Int = UBBContentView.IMAGE_WIDTH_MATCH
+
+        fun setImageWidth(@Px imageWidth: Int): Builder {
+            mImageWidth = imageWidth
+            return this
+        }
+
+        @DrawableRes
+        private var mImagePlaceholderRes: Int = 0
+
+        fun setImagePlaceholderRes(@DrawableRes imagePlaceholderRes: Int): Builder {
+            mImagePlaceholderRes = imagePlaceholderRes
+            return this
+        }
+
+        private var mImagePlaceholderRatio: String = "2:1"
+
+        fun setImagePlaceholderRatio(widthBase: Int, heightBase: Int): Builder {
+            mImagePlaceholderRatio = "$widthBase:$heightBase"
+            return this
+        }
+
+        private var mUBB: String? = null
+
+        fun build(fragment: Fragment, ubb: String?): UBBContentAdapter {
+            return build(fragment.requireContext(), fragment, ubb)
+        }
+
+        fun build(activity: AppCompatActivity, ubb: String?): UBBContentAdapter {
+            return build(activity, activity, ubb)
+        }
+
+        fun build(
+            context: Context,
+            lifecycleOwner: LifecycleOwner,
+            ubb: String?
+        ): UBBContentAdapter {
+            return UBBContentAdapter().also {
+                it.initParams(
+                    mTextColor,
+                    mTextSize,
+                    mLineSpacingExtra,
+                    mLineSpacingMultiplier,
+                    mVerticalSpacing,
+                    mHorizontalSpacing,
+                    mImageLeftTopCorners,
+                    mImageRightTopCorners,
+                    mImageRightBottomCorners,
+                    mImageLeftBottomCorners,
+                    mImageCornersEnableFlags,
+                    mImageWidth,
+                    mImagePlaceholderRes,
+                    mImagePlaceholderRatio
+                )
+                if (mUBB == ubb) {
+                    return@also
+                }
+                lifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+                    withContext(Dispatchers.IO) {
+                        val ubbConvert = UBBContentViewConvert(context)
+                        ubbConvert.parseUBB4SpannableStringBuilder(ubb)
+                        val ubbContentBeanList = ubbConvert.getUBBContentBeanList()
+                        withContext(Dispatchers.Main) {
+                            it.setData(ubbContentBeanList)
+                            mUBB = ubb
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }

@@ -85,6 +85,9 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
     private var mLineSpacingMultiplier: Float = 1.0F
 
     @Px
+    private var mVerticalEdgeSpacing: Int = 0
+
+    @Px
     private var mVerticalSpacing: Int = 0
 
     @Px
@@ -379,6 +382,7 @@ class UBBContentView : RecyclerView, DefaultLifecycleObserver {
             mTextSize,
             mLineSpacingExtra,
             mLineSpacingMultiplier,
+            mVerticalEdgeSpacing,
             mVerticalSpacing,
             mHorizontalSpacing,
             mImageLeftTopCorners,
